@@ -19,6 +19,7 @@
 #include <folly/FileUtil.h>
 #include <folly/Random.h>
 #include <folly/ScopeGuard.h>
+#include <folly/String.h>
 #include <folly/hash/SpookyHashV2.h>
 #include <folly/json/json.h>
 

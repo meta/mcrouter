@@ -10,6 +10,8 @@
 #include "mcrouter/lib/IOBufUtil.h"
 #include "mcrouter/lib/McResUtil.h"
 
+#include <folly/String.h>
+
 namespace facebook {
 namespace memcache {
 
