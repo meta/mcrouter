@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include <folly/Format.h>
+#include <folly/Range.h>
 
 #include "mcrouter/tools/mcpiper/StyledString.h"
 
@@ -43,9 +43,6 @@ class StyleAwareStream {
   template <class T>
   StyleAwareStream& operator<<(const T& t);
 
-  template <bool containerMode, class... Args>
-  StyleAwareStream& operator<<(
-      const folly::Formatter<containerMode, Args...>& formatter);
   StyleAwareStream& operator<<(
       StyleAwareStream<Encoder>& (*f)(StyleAwareStream<Encoder>&));
 

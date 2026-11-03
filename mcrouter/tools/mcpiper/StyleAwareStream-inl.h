@@ -50,15 +50,6 @@ StyleAwareStream<Encoder>& StyleAwareStream<Encoder>::operator<<(
 }
 
 template <class Encoder>
-template <bool containerMode, class... Args>
-StyleAwareStream<Encoder>& StyleAwareStream<Encoder>::operator<<(
-    const folly::Formatter<containerMode, Args...>& formatter) {
-  auto writer = [this](folly::StringPiece sp) { this->writePlain(sp); };
-  formatter(writer);
-  return *this;
-}
-
-template <class Encoder>
 StyleAwareStream<Encoder>& StyleAwareStream<Encoder>::operator<<(
     StyleAwareStream<Encoder>& (*f)(StyleAwareStream<Encoder>&)) {
   return f(*this);
