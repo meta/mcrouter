@@ -6,6 +6,7 @@
  */
 
 #include <barrier>
+#include <memory>
 #include <thread>
 #include <vector>
 
@@ -20,6 +21,7 @@ struct tag3 {};
 struct tag4 {};
 struct tag5 {};
 struct tag6 {};
+struct ThreadExitTag {};
 
 struct aligned128 {
   int16_t x = 1;
@@ -77,4 +79,23 @@ TEST(FiberLocalTest, basic) {
   EXPECT_FALSE(FiberLocal6::ref());
   FiberLocal6::ref() = std::unique_ptr<std::string>(new std::string("hello"));
   EXPECT_EQ("hello", *FiberLocal6::ref());
+}
+
+TEST(FiberLocalTest, accessFromThreadLocalDestructor) {
+  using Local = FiberLocal<std::shared_ptr<int>, ThreadExitTag>;
+  auto value = std::make_shared<int>(42);
+  std::thread([&] {
+    struct AccessOnExit {
+      const std::shared_ptr<int>& value;
+      ~AccessOnExit() {
+        Local::ref() = value;
+      }
+    };
+    // Construct this first so its destructor runs after ordinary thread locals
+    // created by FiberLocal::ref().
+    thread_local AccessOnExit access{value};
+    (void)access;
+    Local::ref() = value;
+  }).join();
+  EXPECT_EQ(value.use_count(), 1);
 }

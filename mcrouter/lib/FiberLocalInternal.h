@@ -11,6 +11,7 @@
 #include <cstdint>
 
 #include <folly/Likely.h>
+#include <folly/SingletonThreadLocal.h>
 #include <folly/fibers/FiberManager.h>
 
 namespace facebook::mcrouter::detail {
@@ -95,6 +96,22 @@ struct FlsWrapper {
 
   void* ptr;
 };
+
+} // namespace facebook::mcrouter::detail
+
+namespace folly::fibers {
+
+// EventBase teardown can access fiber locals from a pthread TLS destructor,
+// after ordinary C++ thread locals have already been destroyed.
+template <>
+inline facebook::mcrouter::detail::FlsWrapper&
+FiberManager::localThread<facebook::mcrouter::detail::FlsWrapper>() {
+  return SingletonThreadLocal<facebook::mcrouter::detail::FlsWrapper>::get();
+}
+
+} // namespace folly::fibers
+
+namespace facebook::mcrouter::detail {
 
 inline void*& FlsRegistry::localStorage() {
   return folly::fibers::local<detail::FlsWrapper>().ptr;
