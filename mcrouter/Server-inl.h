@@ -152,6 +152,17 @@ void serverInit(
   }
 }
 
+void notifySystemdReady();
+
+void installSystemdReadyHandler(apache::thrift::ThriftServer& server);
+
+inline void waitForServerWorkers(const std::vector<folly::EventBase*>& evbs) {
+  // startOnVirtualEB waits for acceptors, but worker init runs afterwards.
+  for (auto* evb : evbs) {
+    evb->runInEventBaseThreadAndWait([] {});
+  }
+}
+
 void startServerShutdown(
     std::shared_ptr<apache::thrift::ThriftServer> thriftServer,
     std::shared_ptr<AsyncMcServer> asyncMcServer,
@@ -509,7 +520,8 @@ bool runServerDual(
           });
         });
 
-    LOG(INFO) << "Thrift Server and AsyncMcServer running.";
+    detail::waitForServerWorkers(evbs);
+    detail::installSystemdReadyHandler(*thriftServer);
     // Run the ThriftServer; this blocks until the server is shut down.
     thriftServer->serve();
     thriftServer.reset();
@@ -612,6 +624,8 @@ bool runServer(
           });
           evb->terminateLoopSoon();
         });
+    detail::waitForServerWorkers(evbs);
+    detail::notifySystemdReady();
     localEvb->loopForever();
     LOG(INFO) << "Started shutdown of CarbonRouterInstance";
     router->shutdown();

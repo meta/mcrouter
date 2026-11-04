@@ -142,7 +142,11 @@ find_package(Boost 1.69.0 REQUIRED
 )
 find_package(OpenSSL REQUIRED)
 find_package(LibEvent MODULE REQUIRED)
+find_package(PkgConfig REQUIRED)
 find_package(ZLIB REQUIRED)
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+  pkg_check_modules(SYSTEMD REQUIRED IMPORTED_TARGET libsystemd)
+endif()
 
 find_program(RAGEL_EXECUTABLE ragel)
 if(NOT RAGEL_EXECUTABLE)
@@ -178,6 +182,9 @@ target_link_libraries(mcrouter_deps INTERFACE
   ${LIBEVENT_LIB}
   atomic
 )
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+  target_link_libraries(mcrouter_deps INTERFACE PkgConfig::SYSTEMD)
+endif()
 
 # Include directories
 # Source tree: CMAKE_CURRENT_SOURCE_DIR contains mcrouter/

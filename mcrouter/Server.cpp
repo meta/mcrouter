@@ -9,8 +9,15 @@
 
 #include <glog/logging.h>
 
+#include <folly/String.h>
+
+#ifdef __linux__
+#include <systemd/sd-daemon.h>
+#endif
+
 #include "mcrouter/lib/network/AsyncMcServer.h"
 
+#include <thrift/lib/cpp/server/TServerEventHandler.h>
 #include <thrift/lib/cpp2/server/ThriftServer.h>
 
 namespace facebook {
@@ -18,6 +25,32 @@ namespace memcache {
 namespace mcrouter {
 
 namespace detail {
+
+void notifySystemdReady() {
+#ifdef __linux__
+  const auto result = sd_notify(0, "READY=1");
+  if (result < 0) {
+    LOG(ERROR) << "Failed to notify systemd of readiness: "
+               << folly::errnoStr(-result);
+  }
+#endif
+}
+
+namespace {
+
+class SystemdReadyHandler : public apache::thrift::server::TServerEventHandler {
+ public:
+  void preServe(const folly::SocketAddress*) override {
+    LOG(INFO) << "Thrift Server and AsyncMcServer running.";
+    notifySystemdReady();
+  }
+};
+
+} // namespace
+
+void installSystemdReadyHandler(apache::thrift::ThriftServer& server) {
+  server.addServerEventHandler(std::make_shared<SystemdReadyHandler>());
+}
 
 void startServerShutdown(
     std::shared_ptr<apache::thrift::ThriftServer> thriftServer,
