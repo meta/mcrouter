@@ -236,12 +236,14 @@ Proxy<RouterInfo>* Proxy<RouterInfo>::createProxy(
   auto proxy = std::unique_ptr<Proxy>(new Proxy(router, id, eventBase));
   auto proxyPtr = proxy.get();
 
+  // Other proxies can schedule fibers directly as soon as this proxy is
+  // exposed.
+  dynamic_cast<folly::fibers::EventBaseLoopController&>(
+      proxyPtr->fiberManager().loopController())
+      .attachEventBase(eventBase);
+
   eventBase.runInEventBaseThread([proxyPtr, &eventBase]() {
     proxyPtr->messageQueue_->attachEventBase(eventBase);
-
-    dynamic_cast<folly::fibers::EventBaseLoopController&>(
-        proxyPtr->fiberManager().loopController())
-        .attachEventBase(eventBase);
 
     std::chrono::milliseconds connectionResetInterval{
         proxyPtr->router().opts().reset_inactive_connection_interval};
