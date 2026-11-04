@@ -20,6 +20,10 @@ Notifier::Notifier(
       nowFunc_(nowFunc),
       postDrainCallback_(std::move(postDrainCallback)),
       lastTimeUsec_(nowFunc_()),
+      // Wait threshold only kicks in after the first drain, so before that
+      // treat construction time as the last drain time instead of leaving
+      // waitStart_ uninitialized.
+      waitStart_(lastTimeUsec_),
       state_(State::EMPTY) {}
 
 bool Notifier::shouldNotifyRelaxed() noexcept {
