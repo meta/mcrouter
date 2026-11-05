@@ -140,7 +140,8 @@ bool McParser::readCaretData() {
       return false;
     }
 
-    const auto messageSize = msgInfo_.headerSize + msgInfo_.bodySize;
+    const uint64_t messageSize =
+        static_cast<uint64_t>(msgInfo_.headerSize) + msgInfo_.bodySize;
 
     // Case 0: There was an overflow. Return an error and let mcrouter close the
     // connection.
