@@ -39,8 +39,6 @@ option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
 include(FBBuildOptions)
 fb_activate_static_library_option()
 
-include(FBThriftCppLibrary)
-
 # Only enable PIC if building shared libs or if user wants it
 if(BUILD_SHARED_LIBS)
   set(CMAKE_POSITION_INDEPENDENT_CODE ON)
@@ -128,7 +126,7 @@ find_package(folly CONFIG REQUIRED)
 find_package(wangle CONFIG REQUIRED)
 find_package(fizz CONFIG REQUIRED)
 find_package(fmt CONFIG REQUIRED)
-find_package(FBThrift CONFIG REQUIRED)
+find_package(thrift CONFIG REQUIRED)
 find_package(gflags CONFIG REQUIRED)
 find_package(glog CONFIG REQUIRED)
 find_package(Boost 1.69.0 REQUIRED
@@ -165,7 +163,7 @@ target_link_libraries(mcrouter_deps INTERFACE
   Folly::folly
   wangle::wangle
   fizz::fizz
-  FBThrift::thriftcpp2
+  thrift::rpc
   fmt::fmt
   gflags
   glog::glog
@@ -219,36 +217,41 @@ add_custom_target(mcrouter_ragel_gen DEPENDS ${RAGEL_OUTPUT})
 # =============================================================================
 # Thrift Code Generation
 # =============================================================================
-add_fbthrift_cpp_library(
+thrift_add_library(
   mcrouter_carbon_result_thrift
   mcrouter/lib/carbon/carbon_result.thrift
+  LANGUAGE cpp2
   OPTIONS stack_arguments sync_methods_return_try
 )
 
-add_fbthrift_cpp_library(
+thrift_add_library(
   mcrouter_carbon_thrift
   mcrouter/lib/carbon/carbon.thrift
+  LANGUAGE cpp2
   DEPENDS mcrouter_carbon_result_thrift
   OPTIONS stack_arguments sync_methods_return_try
 )
 
-add_fbthrift_cpp_library(
+thrift_add_library(
   mcrouter_common_thrift
   mcrouter/lib/network/gen/Common.thrift
+  LANGUAGE cpp2
   DEPENDS mcrouter_carbon_thrift
   OPTIONS stack_arguments sync_methods_return_try
 )
 
-add_fbthrift_cpp_library(
+thrift_add_library(
   mcrouter_memcache_thrift
   mcrouter/lib/network/gen/Memcache.thrift
+  LANGUAGE cpp2
   DEPENDS mcrouter_common_thrift
   OPTIONS stack_arguments sync_methods_return_try
 )
 
-add_fbthrift_cpp_library(
+thrift_add_library(
   mcrouter_memcache_service_thrift
   mcrouter/lib/network/gen/MemcacheService.thrift
+  LANGUAGE cpp2
   SERVICES Memcache
   DEPENDS mcrouter_memcache_thrift
   OPTIONS stack_arguments sync_methods_return_try
@@ -266,6 +269,7 @@ foreach(thrift_target
     PUBLIC
       $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
       $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
+      $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
   )
 endforeach()
 
@@ -517,7 +521,7 @@ install(
 )
 
 # Install thrift targets separately to preserve header directory
-# structure via HEADER_INSTALL_DIR property set by FBThriftCppLibrary
+# structure via the THRIFT_HEADER_DIR property set by thrift_add_library()
 set(MCROUTER_THRIFT_TARGETS
   mcrouter_carbon_result_thrift
   mcrouter_carbon_thrift
@@ -532,7 +536,7 @@ foreach(thrift_target IN LISTS MCROUTER_THRIFT_TARGETS)
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
     PUBLIC_HEADER DESTINATION
-      "$<TARGET_PROPERTY:${thrift_target},HEADER_INSTALL_DIR>"
+      "${CMAKE_INSTALL_INCLUDEDIR}/$<TARGET_PROPERTY:${thrift_target},THRIFT_HEADER_DIR>"
   )
 endforeach()
 
