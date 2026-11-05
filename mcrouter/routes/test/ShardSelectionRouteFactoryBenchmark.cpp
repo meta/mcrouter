@@ -94,7 +94,7 @@ constexpr folly::StringPiece kShardSelectionMedium = R"(
 const folly::dynamic kShardSelectionMediumJson{
     folly::parseJson(kShardSelectionMedium)};
 
-constexpr folly::StringPiece kShardSelectionLarge = R"(
+const folly::StringPiece kShardSelectionLarge = R"(
 {
   "pool": {
     "type": "Pool",
@@ -269,7 +269,7 @@ constexpr folly::StringPiece kShardSelectionLarge = R"(
 const folly::dynamic kShardSelectionLargeJson{
     folly::parseJson(kShardSelectionLarge)};
 
-constexpr folly::StringPiece kEagerShardSelectionHuge = R"(
+const folly::StringPiece kEagerShardSelectionHuge = R"(
 {
   "children_type": "LatestRoute",
   "children_settings" : {},
@@ -618,7 +618,7 @@ constexpr folly::StringPiece kEagerShardSelectionHuge = R"(
 const folly::dynamic kEagerShardSelectionHugeJson{
     folly::parseJson(kEagerShardSelectionHuge)};
 
-constexpr folly::StringPiece kEagerShardSelectionLoadBalancerHuge = R"(
+const folly::StringPiece kEagerShardSelectionLoadBalancerHuge = R"(
 {
   "children_type": "LoadBalancerRoute",
   "children_settings" : {},
