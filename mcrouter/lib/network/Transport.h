@@ -10,8 +10,6 @@
 #include <cstddef>
 #include <functional>
 
-#include <boost/intrusive/list.hpp>
-
 #include <folly/io/async/EventBase.h>
 
 #include "mcrouter/lib/network/ConnectionDownReason.h"
@@ -59,9 +57,7 @@ class Transport : public folly::DelayedDestruction {
   /**
    * Queue used for managing flush callbacks.
    */
-  using FlushList = boost::intrusive::list<
-      folly::EventBase::LoopCallback,
-      boost::intrusive::constant_time_size<false>>;
+  using FlushList = folly::EventBase::LoopCallbackList;
 
   using SvcIdentAuthCallbackFunc = std::function<
       bool(const folly::AsyncTransport&, const ConnectionOptions&)>;
