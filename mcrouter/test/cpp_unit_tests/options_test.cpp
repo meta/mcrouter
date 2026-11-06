@@ -69,6 +69,32 @@ TEST(OptionsSetFromDictTest, StringMapValueMayContainColons) {
   EXPECT_EQ(opts.config_params.at("environment"), "prod");
 }
 
+TEST(OptionsSetFromDictTest, EmptyStringMapParsesToEmptyMap) {
+  EXPECT_TRUE(facebook::memcache::options::parseStringMapOption("").empty());
+
+  McrouterOptions opts;
+  EXPECT_TRUE(opts.updateFromDict({{"config_params", ""}}).empty());
+  EXPECT_TRUE(opts.config_params.empty());
+}
+
+TEST(OptionsSetFromDictTest, EmptyStringMapClearsExistingValue) {
+  McrouterOptions opts;
+  opts.config_params = {{"existing", "value"}};
+
+  EXPECT_TRUE(opts.updateFromDict({{"config_params", ""}}).empty());
+  EXPECT_TRUE(opts.config_params.empty());
+}
+
+TEST(OptionsSetFromDictTest, DefaultOptionsRoundTripWithEmptyStringMap) {
+  McrouterOptions opts;
+  const auto dict = opts.toDict();
+  ASSERT_EQ(dict.at("config_params"), "");
+
+  ASSERT_TRUE(opts.updateFromDict(dict).empty());
+  EXPECT_TRUE(opts.config_params.empty());
+  EXPECT_TRUE(opts.compare(dict).empty());
+}
+
 TEST(OptionsSetFromDictTest, StringMapRejectsMalformedPairs) {
   for (const auto& value : {
            "missing-delimiter",
@@ -91,6 +117,18 @@ TEST(OptionsSetFromDictTest, StringMapRejectsMalformedPairs) {
         opts.config_params,
         (unordered_map<string, string>{{"existing", "value"}}));
   }
+}
+
+TEST(OptionsCompareTest, EmptyStringMapMismatchIsNotAConversionError) {
+  McrouterOptions opts;
+  opts.config_params = {{"existing", "value"}};
+  auto dict = opts.toDict();
+  dict["config_params"] = "";
+
+  const auto errors = opts.compare(dict);
+  ASSERT_EQ(errors.size(), 1);
+  EXPECT_EQ(errors[0].optionName, "config_params");
+  EXPECT_EQ(errors[0].errorMsg.find("couldn't convert value"), string::npos);
 }
 
 TEST(OptionsCompareTest, ToggleTrueAndOneCompareEqual) {

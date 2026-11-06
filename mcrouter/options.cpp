@@ -32,6 +32,10 @@ namespace options {
 unordered_map<string, string> parseStringMapOption(
     const string& str,
     StringMapParseOptions parseOptions) {
+  // An empty option represents an empty map, not a malformed pair.
+  if (str.empty()) {
+    return {};
+  }
   vector<folly::StringPiece> pairs;
   folly::split(',', str, pairs);
   unordered_map<string, string> result;
