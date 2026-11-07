@@ -5,6 +5,8 @@
  * LICENSE file in the root directory of this source tree.
  */
 
+#include <bit>
+
 #include "Lz4Immutable.h"
 
 #include <fmt/format.h>
@@ -166,7 +168,7 @@ uint16_t peekLE(const IovecCursor& cursor) {
  */
 size_t numCommonBytes(size_t diff) {
 #if (defined(__clang__) || ((__GNUC__ * 100 + __GNUC_MINOR__) >= 304))
-  if (folly::Endian::order == folly::Endian::Order::LITTLE) {
+  if (std::endian::native == std::endian::little) {
     // __builtin_ctzll returns the number of trailling zeros in the binary
     // representation of "diff".
     return __builtin_ctzll(diff) >> 3; // we care about bytes (group of 8 bits).
