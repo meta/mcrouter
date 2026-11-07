@@ -202,7 +202,7 @@ RouteHandleMap<RouteHandleIf>::getTargetsForKeyFast(
     folly::StringPiece prefix,
     folly::StringPiece key) const {
   const std::vector<std::shared_ptr<RouteHandleIf>>* result = nullptr;
-  if (FOLLY_LIKELY(prefix.empty())) {
+  if (prefix.empty()) [[likely]] {
     // empty prefix => route to default route
     result = &defaultRouteMap_->getTargetsForKey(key);
   } else if (prefix == kBroadcastPrefix) {

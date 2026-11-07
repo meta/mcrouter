@@ -298,7 +298,7 @@ bool ThriftTransportUtil::hasArtilleryHeaders(
 void ThriftTransportUtil::traceRequest(
     const carbon::MessageCommon& request,
     apache::thrift::RpcOptions& rpcOptions) {
-  if (FOLLY_UNLIKELY(!request.traceContext().empty())) {
+  if (!request.traceContext().empty()) [[unlikely]] {
     folly::fibers::runInMainContext(
         [&]() { traceRequestImpl(request, rpcOptions); });
   }

@@ -65,7 +65,7 @@ class RootRoute {
       RouteHandleTraverser<typename RouterInfo::RouteHandleIf>& t) const {
     const auto* rhPtr = rhMap_.getTargetsForKeyFast(
         req.key_ref()->routingPrefix(), req.key_ref()->routingKey());
-    if (FOLLY_LIKELY(rhPtr != nullptr)) {
+    if (rhPtr != nullptr) [[likely]] {
       for (const auto& rh : *rhPtr) {
         if (t(*rh, req)) {
           return true;
@@ -212,7 +212,7 @@ class RootRoute {
     // for deletes/sets, we cannot assume that there's only one target
     // even when it's a broadcast
     if (!folly::IsOneOf<Request, McDeleteRequest, McSetRequest>::value) {
-      if (FOLLY_LIKELY(rh.size() == 1)) {
+      if (rh.size() == 1) [[likely]] {
         return rh[0]->route(req);
       }
     }

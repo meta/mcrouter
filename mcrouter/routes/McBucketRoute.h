@@ -116,7 +116,7 @@ class McBucketRoute {
     });
     auto& ctx = fiber_local<RouterInfo>::getSharedCtx();
 
-    if (FOLLY_UNLIKELY(ctx->recordingBucketData())) {
+    if (ctx->recordingBucketData()) [[unlikely]] {
       ctx->recordBucketizationData(
           req.key_ref()->keyWithoutRoute().str(),
           bucketId,

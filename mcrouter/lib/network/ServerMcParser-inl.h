@@ -64,7 +64,7 @@ bool ServerMcParser<Callback>::caretMessageReady(
 
 template <class Callback>
 void ServerMcParser<Callback>::handleAscii(folly::IOBuf& readBuffer) {
-  if (FOLLY_UNLIKELY(parser_.protocol() != mc_ascii_protocol)) {
+  if (parser_.protocol() != mc_ascii_protocol) [[unlikely]] {
     std::string reason(
         fmt::format(
             "Expected {} protocol, but received ASCII!",
@@ -99,7 +99,7 @@ bool ServerMcParser<Callback>::shouldReadToAsciiBuffer() const {
 template <class Callback>
 template <class Request>
 void ServerMcParser<Callback>::onRequest(Request&& req, bool noreply) {
-  if (FOLLY_UNLIKELY(debugFifo_ && debugFifo_->isConnected())) {
+  if (debugFifo_ && debugFifo_->isConnected()) [[unlikely]] {
     writeToPipe(req);
   }
   callback_.onRequest(std::move(req), noreply);

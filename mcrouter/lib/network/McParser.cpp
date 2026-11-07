@@ -154,7 +154,7 @@ bool McParser::readCaretData() {
     // Parse message body
     // Case 1: Entire message (and possibly part of next) is in the buffer
     if (readBuffer_.length() >= messageSize) {
-      if (FOLLY_UNLIKELY(debugFifo_ && debugFifo_->isConnected())) {
+      if (debugFifo_ && debugFifo_->isConnected()) [[unlikely]] {
         debugFifo_->startMessage(MessageDirection::Received, msgInfo_.typeId);
         debugFifo_->writeData(readBuffer_.writableData(), messageSize);
       }
@@ -225,11 +225,11 @@ bool McParser::readCaretData() {
 bool McParser::readDataAvailable(size_t len) {
   // Caller is responsible for ensuring the read buffer has enough tailroom
   readBuffer_.append(len);
-  if (FOLLY_UNLIKELY(readBuffer_.length() == 0)) {
+  if (readBuffer_.length() == 0) [[unlikely]] {
     return true;
   }
 
-  if (FOLLY_UNLIKELY(!seenFirstByte_)) {
+  if (!seenFirstByte_) [[unlikely]] {
     seenFirstByte_ = true;
     protocol_ = determineProtocol(*readBuffer_.data());
     if (protocol_ == mc_ascii_protocol) {

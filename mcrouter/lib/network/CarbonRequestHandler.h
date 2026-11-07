@@ -72,7 +72,7 @@ class CarbonRequestHandler : public facebook::memcache::CarbonMessageDispatcher<
       const facebook::memcache::CaretMessageInfo* headerInfo,
       const folly::IOBuf* reqBuf,
       std::true_type) {
-    if (FOLLY_UNLIKELY(!req.traceContext().empty())) {
+    if (!req.traceContext().empty()) [[unlikely]] {
       const bool loggingEnabled = facebook::mcrouter::traceCheckRateLimit();
       if (loggingEnabled ||
           facebook::mcrouter::traceShouldAlwaysEchoContext()) {

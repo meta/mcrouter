@@ -513,7 +513,7 @@ void McServerSession::queueWrite(std::unique_ptr<WriteBuffer> wb) {
     return;
   }
   if (options_.singleWrite) {
-    if (FOLLY_UNLIKELY(debugFifo_.isConnected())) {
+    if (debugFifo_.isConnected()) [[unlikely]] {
       writeToDebugFifo(wb.get());
     }
     const struct iovec* iovs = wb->getIovsBegin();
@@ -562,7 +562,7 @@ void McServerSession::sendWrites() {
   while (!pendingWrites_.empty()) {
     auto wb = pendingWrites_.popFront();
     if (!wb->noReply()) {
-      if (FOLLY_UNLIKELY(debugFifo_.isConnected())) {
+      if (debugFifo_.isConnected()) [[unlikely]] {
         writeToDebugFifo(wb.get());
       }
       iovs.insert(

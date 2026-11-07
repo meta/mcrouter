@@ -101,7 +101,7 @@ class DistributionRoute {
     // - holds a value of a region name (directed cross-region distribution)
     auto distributionRegionOpt =
         fiber_local<RouterInfo>::getDistributionTargetRegion();
-    if (FOLLY_LIKELY(!distributionRegionOpt.has_value())) {
+    if (!distributionRegionOpt.has_value()) [[likely]] {
       return rh_->route(req);
     }
 
@@ -114,7 +114,7 @@ class DistributionRoute {
         ? std::string(kBroadcast)
         : std::move(distributionRegionOpt.value());
     // for directed cross-region distribution write to Axon synchronously:
-    if (FOLLY_UNLIKELY(distributionRegion != kBroadcast)) {
+    if (distributionRegion != kBroadcast) [[unlikely]] {
       return distributeWithLogging(
                  finalReq,
                  distributeWriteRequest,
@@ -182,7 +182,7 @@ class DistributionRoute {
         ? fiber_local<RouterInfo>::getDistributionTargetRegion()
         : inferDistributionRegionForReplay(req, proxy);
 
-    if (FOLLY_LIKELY(!distributionRegionOpt.has_value())) {
+    if (!distributionRegionOpt.has_value()) [[likely]] {
       return rh_->route(req);
     }
 
@@ -200,7 +200,7 @@ class DistributionRoute {
         : std::move(distributionRegionOpt.value());
     // If it is replay or directed cross-region, we write to distribution
     // synchronously:
-    if (FOLLY_UNLIKELY(replay_ || distributionRegion != kBroadcast)) {
+    if (replay_ || distributionRegion != kBroadcast) [[unlikely]] {
       return distributeWithLogging(
                  finalReq,
                  distributeDeleteRequest,
@@ -231,7 +231,7 @@ class DistributionRoute {
               srcRegion_,
               std::nullopt);
 
-          if (FOLLY_UNLIKELY(!spoolSucceeded)) {
+          if (!spoolSucceeded) [[unlikely]] {
             if (returnErrorOnDeleteFailure_) {
               ctx->proxy().stats().increment(
                   distribution_error_on_delete_failure_stat);
@@ -267,7 +267,7 @@ class DistributionRoute {
       const McDeleteRequest& req,
       ProxyBase& proxy) const {
     auto sourceIt = req.attributes()->find(memcache::kMcDeleteReqAttrSource);
-    if (FOLLY_LIKELY(sourceIt == req.attributes()->end())) {
+    if (sourceIt == req.attributes()->end()) [[likely]] {
       return std::nullopt;
     }
     switch (static_cast<McDeleteRequestSource>(sourceIt->second)) {

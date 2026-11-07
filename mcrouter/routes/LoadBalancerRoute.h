@@ -270,7 +270,7 @@ class LoadBalancerRoute {
             return WeightedCh3HashFunc::hash(sp, weights);
           });
     }
-    if (FOLLY_UNLIKELY(n >= children_.size())) {
+    if (n >= children_.size()) [[unlikely]] {
       throw std::runtime_error("index out of range");
     }
     return n;

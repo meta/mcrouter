@@ -616,7 +616,7 @@ void AsciiSerializedReply::prepareUpdateLike(
     return;
   }
 
-  if (FOLLY_UNLIKELY(result == carbon::Result::OK)) {
+  if (result == carbon::Result::OK) [[unlikely]] {
     addString("STORED\r\n");
     return;
   }

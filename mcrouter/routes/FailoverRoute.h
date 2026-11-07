@@ -198,7 +198,7 @@ class FailoverRoute {
       Iterator& iter,
       FailoverPolicyContext& ctx) {
     auto res = shouldFailover(reply, req);
-    if (FOLLY_LIKELY(res == FailoverErrorsSettingsBase::FailoverType::NONE)) {
+    if (res == FailoverErrorsSettingsBase::FailoverType::NONE) [[likely]] {
       return true;
     }
     if (res == FailoverErrorsSettingsBase::FailoverType::CONDITIONAL) {
@@ -272,8 +272,8 @@ class FailoverRoute {
     if (failoverTagging_) {
       setFailoverHopCount(normalReply, getFailoverHopCount(req));
     }
-    if (FOLLY_LIKELY(processReply(
-            normalReply, req, conditionalFailover, iter, policyCtx))) {
+    if (processReply(normalReply, req, conditionalFailover, iter, policyCtx))
+        [[likely]] {
       return normalReply;
     }
     if (++iter == failoverPolicy_.end(req, policyCtx)) {
@@ -340,8 +340,9 @@ class FailoverRoute {
            ++cur, ++nx) {
         failoverReply = doFailover(cur);
         incFailureDomainStat(normalReply, failoverReply);
-        if (FOLLY_LIKELY(processReply(
-                failoverReply, req, conditionalFailover, cur, policyCtx))) {
+        if (processReply(
+                failoverReply, req, conditionalFailover, cur, policyCtx))
+            [[likely]] {
           return failoverReply;
         }
       }

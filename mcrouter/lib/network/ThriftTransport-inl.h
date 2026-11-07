@@ -152,12 +152,12 @@ auto ThriftTransportBase::sendSyncImpl(F&& sendFunc) {
   // Destructor guard used to keep transport alive when connecting
   std::optional<DestructorGuard> dgConn;
   ConnectionState oldState = connectionState_;
-  if (FOLLY_UNLIKELY(connectionState_ != ConnectionState::Up)) {
+  if (connectionState_ != ConnectionState::Up) [[unlikely]] {
     dgConn.emplace(this);
   }
   auto tryReply = sendFunc();
 
-  if (FOLLY_LIKELY(tryReply.hasValue() && tryReply->response.hasValue())) {
+  if (tryReply.hasValue() && tryReply->response.hasValue()) [[likely]] {
     return std::move(*tryReply->response);
   }
 
@@ -173,10 +173,9 @@ template <class Response>
 void ThriftTransportUtil::traceResponse(
     const carbon::MessageCommon& request,
     folly::Try<apache::thrift::RpcResponseComplete<Response>>& reply) {
-  if (FOLLY_UNLIKELY(
-          !request.traceContext().empty() && reply.hasValue() &&
-          reply->response.hasValue() &&
-          hasArtilleryHeaders(reply->responseContext.headers))) {
+  if (!request.traceContext().empty() && reply.hasValue() &&
+      reply->response.hasValue() &&
+      hasArtilleryHeaders(reply->responseContext.headers)) [[unlikely]] {
     folly::fibers::runInMainContext([&]() {
       traceResponseImpl(*reply->response, reply->responseContext.headers);
     });
