@@ -279,7 +279,7 @@ class ServerOnRequest {
     // AsyncMcServer, which has its own overload below.
     if constexpr (!folly::IsOneOf<Request, McStatsRequest, McVersionRequest>::
                       value) {
-      if (FOLLY_UNLIKELY(dropUntaintedClientRequests_)) {
+      if (dropUntaintedClientRequests_) [[unlikely]] {
         if (isUntaintedRequest(ctx.getThriftRequestContext()) &&
             // Both are read, not consumed: send() still moves them below.
             // NOLINTNEXTLINE(facebook-hte-MissingStdForward)

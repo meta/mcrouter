@@ -36,12 +36,12 @@ class SmallPrefix {
 
   FOLLY_ALWAYS_INLINE
   explicit SmallPrefix(std::string_view s) {
-    if (FOLLY_LIKELY(s.size() >= 8)) {
+    if (s.size() >= 8) [[likely]] {
       std::memcpy(&data_, s.data(), 8);
       data_ = folly::Endian::swap(data_);
       return;
     }
-    if (FOLLY_LIKELY(s.data() != nullptr)) {
+    if (s.data() != nullptr) [[likely]] {
       std::memcpy(&data_, s.data(), s.size());
       data_ = folly::Endian::swap(data_);
     }

@@ -44,7 +44,7 @@ size_t WeightedCh3HashFunc::hash(
     uint64_t w = weights[index] * std::numeric_limits<uint32_t>::max();
 
     /* Rehash only if p is out of range */
-    if (FOLLY_LIKELY(p < w)) {
+    if (p < w) [[likely]] {
       return index;
     }
 

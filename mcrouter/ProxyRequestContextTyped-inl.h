@@ -126,11 +126,11 @@ bool precheckRequest(
 template <class RouterInfo, class Request>
 void ProxyRequestContextTyped<RouterInfo, Request>::sendReply(
     ReplyT<Request>&& reply) {
-  if (FOLLY_UNLIKELY(this->recording())) {
+  if (this->recording()) [[unlikely]] {
     return;
   }
 
-  if (FOLLY_UNLIKELY(this->replied_)) {
+  if (this->replied_) [[unlikely]] {
     return;
   }
   this->replied_ = true;
@@ -142,7 +142,7 @@ void ProxyRequestContextTyped<RouterInfo, Request>::sendReply(
   auto& stats = this->proxy().stats();
   stats.increment(request_replied_stat);
   stats.increment(request_replied_count_stat);
-  if (FOLLY_UNLIKELY(isErrorResult(result))) {
+  if (isErrorResult(result)) [[unlikely]] {
     stats.increment(request_error_stat);
     stats.increment(request_error_count_stat);
   } else {

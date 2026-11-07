@@ -113,7 +113,7 @@ bool CarbonRouterClient<RouterInfo>::sendMultiImpl(
     F&& makeNextPreq,
     G&& failRemaining) {
   auto router = router_.lock();
-  if (FOLLY_UNLIKELY(!router)) {
+  if (!router) [[unlikely]] {
     return false;
   }
 

@@ -65,7 +65,7 @@ void IovecCursor::peekInto(uint8_t* dest, size_t size) const {
   // short read rather than dereferencing iov_ past its end (out-of-bounds
   // read). Compliant callers never trip these guards.
   size_t i = iovIndex_;
-  if (FOLLY_UNLIKELY(i >= iovLength_)) {
+  if (i >= iovLength_) [[unlikely]] {
     return;
   }
   const uint8_t* cur =
@@ -78,7 +78,7 @@ void IovecCursor::peekInto(uint8_t* dest, size_t size) const {
     dest += toCopy;
     size -= toCopy;
     if (size > 0) {
-      if (FOLLY_UNLIKELY(++i >= iovLength_)) {
+      if (++i >= iovLength_) [[unlikely]] {
         return;
       }
       cur = reinterpret_cast<uint8_t*>(iov_[i].iov_base);

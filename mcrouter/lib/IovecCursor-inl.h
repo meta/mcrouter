@@ -20,7 +20,7 @@ template <class T>
 T IovecCursor::peek() const {
   static_assert(std::is_integral<T>::value, "Read requires an integral type");
 
-  if (FOLLY_LIKELY(curBufLen_ >= sizeof(T))) {
+  if (curBufLen_ >= sizeof(T)) [[likely]] {
     return folly::loadUnaligned<T>(
         reinterpret_cast<uint8_t*>(iov_[iovIndex_].iov_base) + curBufPos_);
   }

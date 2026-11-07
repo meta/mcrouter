@@ -249,7 +249,7 @@ class CarbonRouterInstance
    * outlive the current turn of that thread's loop.
    */
   Proxy<RouterInfo>* FOLLY_NULLABLE getProxyFromHash(size_t hash) const {
-    if (FOLLY_UNLIKELY(proxiesDraining_.load(std::memory_order_relaxed))) {
+    if (proxiesDraining_.load(std::memory_order_relaxed)) [[unlikely]] {
       return nullptr;
     }
     DCHECK(!proxies_.empty());

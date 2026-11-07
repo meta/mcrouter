@@ -122,7 +122,7 @@ void safeCopy(uint8_t* dest, IovecCursor& source, size_t count) {
   uint64_t src;
   do {
     size_t toWrite = std::min((int64_t)8, left);
-    if (FOLLY_LIKELY(toWrite == sizeof(uint64_t))) {
+    if (toWrite == sizeof(uint64_t)) [[likely]] {
       src = source.peek<uint64_t>();
     } else {
       source.peekInto(reinterpret_cast<uint8_t*>(&src), toWrite);
@@ -245,7 +245,7 @@ std::unique_ptr<folly::IOBuf> Lz4Immutable::compress(
 std::unique_ptr<folly::IOBuf> Lz4Immutable::compress(
     const struct iovec* iov,
     size_t iovcnt) const {
-  if (FOLLY_UNLIKELY(iovcnt == 0)) {
+  if (iovcnt == 0) [[unlikely]] {
     return folly::IOBuf::create(0);
   }
 
@@ -266,14 +266,14 @@ size_t Lz4Immutable::compressInto(
     size_t iovcnt,
     void* dest,
     size_t destSize) const {
-  if (FOLLY_UNLIKELY(iovcnt == 0)) {
+  if (iovcnt == 0) [[unlikely]] {
     return 0;
   }
 
   IovecCursor source(iov, iovcnt);
   checkInputSize(source.totalLength());
 
-  if (FOLLY_UNLIKELY(destSize < compressBound(source.totalLength()))) {
+  if (destSize < compressBound(source.totalLength())) [[unlikely]] {
     throw std::invalid_argument(
         fmt::format(
             "Destination too small. Size: {}. Required: {}",
@@ -373,7 +373,7 @@ size_t Lz4Immutable::compressCommon(
     while (source.tell() > anchorCursor.tell() && match.tell() > 0) {
       source.retreat(1);
       match.retreat(1);
-      if (FOLLY_LIKELY(source.peek<uint8_t>() != match.peek<uint8_t>())) {
+      if (source.peek<uint8_t>() != match.peek<uint8_t>()) [[likely]] {
         source.advance(1);
         match.advance(1);
         break;
@@ -490,7 +490,7 @@ std::unique_ptr<folly::IOBuf> Lz4Immutable::decompress(
     const struct iovec* iov,
     size_t iovcnt,
     size_t uncompressedSize) const noexcept {
-  if (FOLLY_UNLIKELY(uncompressedSize == 0)) {
+  if (uncompressedSize == 0) [[unlikely]] {
     return folly::IOBuf::create(0);
   }
 
@@ -522,7 +522,7 @@ std::unique_ptr<folly::IOBuf> Lz4Immutable::decompress(
   // Main loop
   while (true) {
     // LZ4 token
-    if (FOLLY_UNLIKELY(sourceBytesLeft() < sizeof(uint8_t))) {
+    if (sourceBytesLeft() < sizeof(uint8_t)) [[unlikely]] {
       return nullptr;
     }
     size_t token = source.read<uint8_t>();
@@ -532,7 +532,7 @@ std::unique_ptr<folly::IOBuf> Lz4Immutable::decompress(
     if (literalLength == kRunMask) {
       size_t s;
       do {
-        if (FOLLY_UNLIKELY(sourceBytesLeft() < sizeof(uint8_t))) {
+        if (sourceBytesLeft() < sizeof(uint8_t)) [[unlikely]] {
           return nullptr;
         }
         s = source.read<uint8_t>();
@@ -541,7 +541,7 @@ std::unique_ptr<folly::IOBuf> Lz4Immutable::decompress(
     }
 
     // Copy literals
-    if (FOLLY_UNLIKELY(literalLength > sourceBytesLeft())) {
+    if (literalLength > sourceBytesLeft()) [[unlikely]] {
       return nullptr;
     }
     uint8_t* cpy = output + literalLength;
@@ -557,18 +557,18 @@ std::unique_ptr<folly::IOBuf> Lz4Immutable::decompress(
     output = cpy;
 
     // Get match offset
-    if (FOLLY_UNLIKELY(sourceBytesLeft() < sizeof(uint16_t))) {
+    if (sourceBytesLeft() < sizeof(uint16_t)) [[unlikely]] {
       return nullptr;
     }
     uint16_t offset = peekLE(source);
     source.advance(2);
     size_t outputProgress = static_cast<size_t>(output - outputStart);
     size_t window = dicCursor.totalLength() + outputProgress;
-    if (FOLLY_UNLIKELY(offset == 0 || offset > window)) {
+    if (offset == 0 || offset > window) [[unlikely]] {
       return nullptr;
     }
     size_t matchPos = window - offset;
-    if (FOLLY_UNLIKELY(matchPos >= dicCursor.totalLength())) {
+    if (matchPos >= dicCursor.totalLength()) [[unlikely]] {
       return nullptr;
     }
 
@@ -577,7 +577,7 @@ std::unique_ptr<folly::IOBuf> Lz4Immutable::decompress(
     if (matchLength == kMlMask) {
       size_t s;
       do {
-        if (FOLLY_UNLIKELY(sourceBytesLeft() < sizeof(uint8_t))) {
+        if (sourceBytesLeft() < sizeof(uint8_t)) [[unlikely]] {
           return nullptr;
         }
         s = source.read<uint8_t>();
@@ -587,9 +587,8 @@ std::unique_ptr<folly::IOBuf> Lz4Immutable::decompress(
     matchLength += kMinMatch;
 
     // Copy match
-    if (FOLLY_UNLIKELY(
-            output + matchLength > outputLimit ||
-            matchPos + matchLength > dicCursor.totalLength())) {
+    if (output + matchLength > outputLimit ||
+        matchPos + matchLength > dicCursor.totalLength()) [[unlikely]] {
       return nullptr;
     }
     match.seek(matchPos);

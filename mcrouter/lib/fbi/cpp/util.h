@@ -90,7 +90,7 @@ void checkLogic(
     bool condition,
     fmt::format_string<detail::FormatArgT<Args>...> fmt,
     Args&&... args) {
-  if (FOLLY_UNLIKELY(!condition)) {
+  if (!condition) [[unlikely]] {
     throw std::logic_error(
         detail::formatMessage<Args...>(fmt, std::forward<Args>(args)...));
   }
@@ -117,7 +117,7 @@ void checkRuntime(
     bool condition,
     fmt::format_string<detail::FormatArgT<Args>...> fmt,
     Args&&... args) {
-  if (FOLLY_UNLIKELY(!condition)) {
+  if (!condition) [[unlikely]] {
     throw std::runtime_error(
         detail::formatMessage<Args...>(fmt, std::forward<Args>(args)...));
   }

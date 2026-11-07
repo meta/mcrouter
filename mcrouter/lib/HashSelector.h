@@ -41,7 +41,7 @@ class HashSelectorBase {
         return hashFunc_(sp);
       });
     }
-    if (FOLLY_UNLIKELY(n >= size)) {
+    if (n >= size) [[unlikely]] {
       throw std::runtime_error("index out of range");
     }
     return n;

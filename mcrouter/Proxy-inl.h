@@ -155,7 +155,7 @@ void Proxy<RouterInfo>::processRequest(
   ctx->markAsProcessing();
   ++numRequestsProcessing_;
   stats().increment(proxy_reqs_processing_stat);
-  if (FOLLY_UNLIKELY(req.getCryptoAuthToken().has_value())) {
+  if (req.getCryptoAuthToken().has_value()) [[unlikely]] {
     stats().increment(request_has_crypto_auth_token_stat);
   }
   ctx->runPreprocessFunction();

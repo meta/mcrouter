@@ -97,7 +97,7 @@ class IovecCursor {
   inline void advance(size_t bytes) {
     assert(bytes <= totalLength() - tell());
 
-    if (FOLLY_LIKELY(bytes < curBufLen_)) {
+    if (bytes < curBufLen_) [[likely]] {
       absolutePos_ += bytes;
       curBufPos_ += bytes;
       curBufLen_ -= bytes;
@@ -113,7 +113,7 @@ class IovecCursor {
   inline void retreat(size_t bytes) {
     assert(bytes <= tell());
 
-    if (FOLLY_LIKELY(bytes <= curBufPos_)) {
+    if (bytes <= curBufPos_) [[likely]] {
       absolutePos_ -= bytes;
       curBufPos_ -= bytes;
       curBufLen_ += bytes;
