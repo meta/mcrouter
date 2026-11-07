@@ -7,6 +7,8 @@
 
 #include "mcrouter/routes/RoutingUtils.h"
 
+#include <algorithm>
+
 #include <folly/json/dynamic.h>
 #include "mcrouter/lib/fbi/cpp/util.h"
 #include "mcrouter/options.h"
@@ -26,25 +28,21 @@ uint32_t getAdditionalFanout(
   }
 
   checkLogic(jAdditionalFanout->isInt(), "additional_fanout is not an integer");
-  uint32_t additionalFanout = jAdditionalFanout->getInt();
-  if (!opts.thread_affinity) {
-    checkLogic(
-        static_cast<uint64_t>(additionalFanout + 1) *
-                static_cast<uint64_t>(opts.num_proxies) <=
-            kMaxTotalFanout,
-        "(additional_fanout={} + 1) * num_proxies={} must be <= {}",
-        additionalFanout,
-        opts.num_proxies,
-        kMaxTotalFanout);
-  } else {
-    checkLogic(
-        static_cast<uint64_t>(additionalFanout + 1) <= kMaxTotalFanout,
-        "(additional_fanout={} + 1) must be <= {}",
-        additionalFanout,
-        kMaxTotalFanout);
-  }
+  const int64_t additionalFanout = jAdditionalFanout->getInt();
+  const uint32_t maxFanout = getMaxAdditionalFanout(opts);
+  checkLogic(
+      additionalFanout >= 0 && additionalFanout <= maxFanout,
+      "additional_fanout={} must be in [0, {}]",
+      additionalFanout,
+      maxFanout);
+  return static_cast<uint32_t>(additionalFanout);
+}
 
-  return additionalFanout;
+uint32_t getMaxAdditionalFanout(const McrouterOptions& opts) {
+  const uint64_t numProxies =
+      opts.thread_affinity ? 1 : std::max<uint64_t>(opts.num_proxies, 1);
+  return static_cast<uint32_t>(
+      std::max<uint64_t>(kMaxTotalFanout / numProxies, 1) - 1);
 }
 
 std::optional<folly::StringPiece> getTwJobFromServices(

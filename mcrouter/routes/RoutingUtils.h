@@ -150,6 +150,12 @@ uint32_t getAdditionalFanout(
     const McrouterOptions& opts);
 
 /**
+ * Largest additional_fanout value that getAdditionalFanout() accepts for the
+ * given options.
+ */
+uint32_t getMaxAdditionalFanout(const McrouterOptions& opts);
+
+/**
  * Extract the tw_job handle for a given server from a PoolRoute's `services`
  * object (services[serverKey].props.tw_job).
  *
