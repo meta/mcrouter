@@ -283,7 +283,7 @@ class McPiperVisitor {
               str.begin(), str.end(), std::isprint)) {
         /* JSON doesn't deal with arbitrary binary data - the input string
            must be valid UTF-8.  So we just hex encode the whole string. */
-        out.append(folly::hexlify(str));
+        out.append(folly::hexlify(folly::ByteRange{str}));
       } else {
         out.append(folly::cEscape<std::string>(str));
       }
