@@ -6,7 +6,10 @@
  */
 
 #include <fmt/format.h>
+
 #include <gtest/gtest.h>
+
+#include <folly/String.h>
 
 #include "mcrouter/lib/network/ServerMcParser.h"
 #include "mcrouter/lib/network/test/TestMcAsciiParserUtil.h"
