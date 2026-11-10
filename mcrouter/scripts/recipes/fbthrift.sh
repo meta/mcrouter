@@ -18,6 +18,7 @@ if [[ ! -d "$PKG_DIR/fbthrift" ]]; then
   fi
 fi
 
+mkdir -p "$PKG_DIR/fbthrift/build"
 cd "$PKG_DIR/fbthrift/build" || die "cd fbthrift failed"
 
 CXXFLAGS="$CXXFLAGS -fPIC" \
