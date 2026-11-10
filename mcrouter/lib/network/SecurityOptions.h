@@ -65,6 +65,14 @@ struct SecurityOptions {
   bool sessionCachingEnabled{false};
 
   /**
+   * Prefixes the session cache key, so connections resume only sessions
+   * created with the same scope. Empty shares sessions among all connections
+   * in the process with the same key: the destination, or its service
+   * identity when set.
+   */
+  std::string sessionKeyScope;
+
+  /**
    * enable ssl handshake offload to a separate thread pool
    */
   bool sslHandshakeOffload{false};

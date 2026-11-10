@@ -244,7 +244,8 @@ TestClient::TestClient(
     bool enableTfo,
     bool offloadHandshakes,
     bool sessionCachingEnabled,
-    std::optional<std::string> serviceIdOverride)
+    std::optional<std::string> serviceIdOverride,
+    std::string sessionKeyScope)
     : fm_(std::make_unique<folly::fibers::EventBaseLoopController>()) {
   dynamic_cast<folly::fibers::EventBaseLoopController&>(fm_.loopController())
       .attachEventBase(eventBase_);
@@ -258,6 +259,7 @@ TestClient::TestClient(
     opts.securityOpts.sslPemKeyPath = ssl->sslKeyPath;
     opts.securityOpts.sslPemCaPath = ssl->sslCaPath;
     opts.securityOpts.sessionCachingEnabled = sessionCachingEnabled;
+    opts.securityOpts.sessionKeyScope = std::move(sessionKeyScope);
     opts.securityOpts.sslServiceIdentity = serviceIdentity;
     opts.securityOpts.tfoEnabledForSsl = enableTfo;
     opts.securityOpts.sslHandshakeOffload = offloadHandshakes;

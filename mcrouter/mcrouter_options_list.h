@@ -435,6 +435,19 @@ MCROUTER_OPTION_TOGGLE(
     "If enabled, limited number of SSL sessions will be cached")
 
 MCROUTER_OPTION_TOGGLE(
+    ssl_session_cache_per_router,
+    false,
+    "ssl-session-cache-per-router",
+    no_short,
+    "If enabled, a router instance resumes only the SSL sessions it created, "
+    "instead of any session cached in the process under the same key (the "
+    "destination, or its service identity when set). Enable it when router "
+    "instances in one process present different client certificates: a "
+    "resumed session keeps the certificate of the connection that created it. "
+    "Applies to sessions cached under ssl-connection-cache, and to TLS 1.3 "
+    "(Fizz) sessions, which are always cached.")
+
+MCROUTER_OPTION_TOGGLE(
     ssl_handshake_offload,
     false,
     "ssl-handshake-offload",

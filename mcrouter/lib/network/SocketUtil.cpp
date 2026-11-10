@@ -43,11 +43,13 @@ std::string getSessionKey(const ConnectionOptions& opts) {
       service = svcIdentity;
     }
   }
-  return fmt::format(
+  auto key = fmt::format(
       "{}:{}:{}",
       service,
       mc_protocol_to_string(opts.accessPoint->getProtocol()),
       securityMechToString(opts.accessPoint->getSecurityMech()));
+  const auto& scope = opts.securityOpts.sessionKeyScope;
+  return scope.empty() ? key : fmt::format("{}:{}", scope, key);
 }
 
 void createTCPKeepAliveOptions(

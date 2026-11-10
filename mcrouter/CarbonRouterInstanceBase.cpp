@@ -7,6 +7,7 @@
 
 #include "CarbonRouterInstanceBase.h"
 
+#include <atomic>
 #include <chrono>
 #include <cstdint>
 #include <limits>
@@ -33,6 +34,11 @@ namespace memcache {
 namespace mcrouter {
 
 namespace {
+
+uint64_t nextInstanceId() {
+  static std::atomic<uint64_t> next{0};
+  return next.fetch_add(1, std::memory_order_relaxed);
+}
 
 struct CarbonRouterInstanceBaseFunctionSchedulerTag {};
 folly::Singleton<
@@ -191,6 +197,7 @@ void logFailureEveryN(
 CarbonRouterInstanceBase::CarbonRouterInstanceBase(McrouterOptions inputOptions)
     : opts_(finalizeOpts(std::move(inputOptions))),
       pid_(getpid()),
+      instanceId_(nextInstanceId()),
       configApi_(createConfigApi(opts_)),
       rtVarsData_(std::make_shared<ObservableRuntimeVars>()),
       leaseTokenMap_(globalFunctionScheduler.try_get()),

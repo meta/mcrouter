@@ -71,6 +71,14 @@ class CarbonRouterInstanceBase {
     return pid_;
   }
 
+  /**
+   * Unique among the router instances this process has created, and never
+   * reused, unlike the instance's address.
+   */
+  uint64_t instanceId() const {
+    return instanceId_;
+  }
+
   const McrouterOptions& opts() const {
     return opts_;
   }
@@ -292,6 +300,7 @@ class CarbonRouterInstanceBase {
 
   const McrouterOptions opts_;
   const pid_t pid_;
+  const uint64_t instanceId_;
   const std::unique_ptr<ConfigApi> configApi_;
 
   LogPostprocessCallbackFunc postprocessCallback_;

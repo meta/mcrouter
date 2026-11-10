@@ -205,7 +205,8 @@ class TestClient {
       bool enableTfo = false,
       bool offloadHandshakes = false,
       bool sessionCachingEnabled = true,
-      std::optional<std::string> serviceIdOverride = std::nullopt);
+      std::optional<std::string> serviceIdOverride = std::nullopt,
+      std::string sessionKeyScope = "");
 
   void setThrottle(size_t maxInflight, size_t maxOutstanding) {
     client_->setThrottle(maxInflight, maxOutstanding);

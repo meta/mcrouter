@@ -325,6 +325,10 @@ void ProxyDestination<Transport>::initializeTransport() {
       options.securityOpts.sslPemCaPath = opts.pem_ca_path;
     }
     options.securityOpts.sessionCachingEnabled = opts.ssl_connection_cache;
+    if (opts.ssl_session_cache_per_router) {
+      options.securityOpts.sessionKeyScope =
+          "router-" + std::to_string(proxy().router().instanceId());
+    }
     options.securityOpts.sslHandshakeOffload = opts.ssl_handshake_offload;
     options.securityOpts.sslServiceIdentity = opts.ssl_service_identity;
     options.securityOpts.sslAuthorizationEnforce =

@@ -711,6 +711,34 @@ void caretBinaryReply(std::string data, carbon::Result expectedResult) {
   serverThread.join();
 }
 
+// Sends a request on a new connection and checks whether its handshake
+// resumed a cached session.
+void sendAndCheckResumption(
+    TestClient& client,
+    SecurityMech mech,
+    bool expectResumed) {
+  client.setConnectionStatusCallbacks(
+      [mech, expectResumed](const folly::AsyncTransportWrapper& sock, int64_t) {
+        if (mech == SecurityMech::TLS) {
+          auto* socket = sock.getUnderlyingTransport<folly::AsyncSSLSocket>();
+          EXPECT_EQ(socket->getSSLSessionReused(), expectResumed);
+        } else if (mech == SecurityMech::TLS_TO_PLAINTEXT) {
+          auto* socket = sock.getUnderlyingTransport<TlsToPlainTransport>();
+          EXPECT_NE(socket, nullptr);
+          auto stats = socket->getStats();
+          EXPECT_EQ(stats.sessionReuseSuccess, expectResumed);
+        } else {
+          EXPECT_EQ(mech, SecurityMech::TLS13_FIZZ);
+          auto* fizzSock =
+              sock.getUnderlyingTransport<fizz::client::AsyncFizzClient>();
+          EXPECT_EQ(fizzSock->pskResumed(), expectResumed);
+        }
+      },
+      nullptr);
+  client.sendGet("test", carbon::Result::FOUND);
+  client.waitForReplies();
+}
+
 class AsyncMcClientSessionTest : public TestWithParam<SecurityMech> {};
 
 TEST_P(AsyncMcClientSessionTest, SessionResumption) {
@@ -722,40 +750,9 @@ TEST_P(AsyncMcClientSessionTest, SessionResumption) {
   auto server = TestServer::create(std::move(config));
   auto constexpr nConnAttempts = 10;
 
-  auto sendAndCheckRequest = [mech](TestClient& client, int i) {
+  const auto attempt = [mech](TestClient& client, int i) {
     LOG(INFO) << "Connection attempt: " << i;
-    client.setConnectionStatusCallbacks(
-        [&](const folly::AsyncTransportWrapper& sock, int64_t) {
-          if (mech == SecurityMech::TLS) {
-            auto* socket = sock.getUnderlyingTransport<folly::AsyncSSLSocket>();
-            if (i != 0) {
-              EXPECT_TRUE(socket->getSSLSessionReused());
-            } else {
-              EXPECT_FALSE(socket->getSSLSessionReused());
-            }
-          } else if (mech == SecurityMech::TLS_TO_PLAINTEXT) {
-            auto* socket = sock.getUnderlyingTransport<TlsToPlainTransport>();
-            EXPECT_NE(socket, nullptr);
-            auto stats = socket->getStats();
-            if (i != 0) {
-              EXPECT_TRUE(stats.sessionReuseSuccess);
-            } else {
-              EXPECT_FALSE(stats.sessionReuseSuccess);
-            }
-          } else {
-            EXPECT_EQ(mech, SecurityMech::TLS13_FIZZ);
-            auto* fizzSock =
-                sock.getUnderlyingTransport<fizz::client::AsyncFizzClient>();
-            if (i != 0) {
-              EXPECT_TRUE(fizzSock->pskResumed());
-            } else {
-              EXPECT_FALSE(fizzSock->pskResumed());
-            }
-          }
-        },
-        nullptr);
-    client.sendGet("test", carbon::Result::FOUND);
-    client.waitForReplies();
+    sendAndCheckResumption(client, mech, i != 0);
   };
 
   auto ssl = validClientSsl();
@@ -764,7 +761,7 @@ TEST_P(AsyncMcClientSessionTest, SessionResumption) {
   for (int i = 0; i < nConnAttempts; i++) {
     TestClient client(
         "::1", server->getListenPort(), 200, mc_caret_protocol, ssl);
-    sendAndCheckRequest(client, i);
+    attempt(client, i);
   }
 
   // do the same test w/ service identity
@@ -779,7 +776,7 @@ TEST_P(AsyncMcClientSessionTest, SessionResumption) {
         0,
         0,
         folly::to<std::string>("test_", (int)GetParam()));
-    sendAndCheckRequest(client, i);
+    attempt(client, i);
   }
 
   // do the same test w/service identity and ap service
@@ -801,10 +798,52 @@ TEST_P(AsyncMcClientSessionTest, SessionResumption) {
         false,
         true,
         std::optional<std::string>(serviceIdOverride));
-    sendAndCheckRequest(client, i);
+    attempt(client, i);
   }
 
   // shutdown the server
+  TestClient client(
+      "::1", server->getListenPort(), 200, mc_caret_protocol, ssl);
+  client.sendGet("shutdown", carbon::Result::NOTFOUND);
+  client.waitForReplies();
+
+  server->join();
+}
+
+TEST_P(AsyncMcClientSessionTest, SessionKeyScopeSeparatesSessions) {
+  auto mech = GetParam();
+  TestServer::Config config;
+  config.useDefaultVersion = true;
+  config.useTicketKeySeeds = true;
+  auto server = TestServer::create(std::move(config));
+  auto ssl = validClientSsl();
+  ssl.mech = mech;
+  const auto connect = [&](std::string scope, bool expectResumed) {
+    TestClient client(
+        "::1",
+        server->getListenPort(),
+        200,
+        mc_caret_protocol,
+        ssl,
+        0,
+        0,
+        "",
+        nullptr,
+        false,
+        false,
+        true,
+        std::nullopt,
+        std::move(scope));
+    sendAndCheckResumption(client, mech, expectResumed);
+  };
+
+  // All four reach the same destination. Without scopes, the second would
+  // resume the session the first created.
+  connect("a", false);
+  connect("b", false);
+  connect("a", true);
+  connect("b", true);
+
   TestClient client(
       "::1", server->getListenPort(), 200, mc_caret_protocol, ssl);
   client.sendGet("shutdown", carbon::Result::NOTFOUND);
