@@ -22,6 +22,8 @@
 namespace facebook {
 namespace memcache {
 
+inline constexpr uint32_t kMaxIPv6FlowLabel = 0xfffff;
+
 /**
  * A struct for storing all connection related options.
  */
@@ -56,6 +58,14 @@ struct ConnectionOptions {
    * Access point of the destination.
    */
   std::shared_ptr<const AccessPoint> accessPoint;
+
+  /**
+   * IPv6 flow label in [1, kMaxIPv6FlowLabel], registered before each TCP
+   * connect; 0 disables labeling. With a nonzero label, connections to IPv4,
+   * IPv4-mapped or Unix-socket destinations fail. Service-name destinations
+   * connect through ServiceRouter and are not labeled.
+   */
+  uint32_t ipv6FlowLabel{0};
 
   /**
    * Number of TCP KeepAlive probes to send before considering connection dead.

@@ -233,6 +233,20 @@ MCROUTER_OPTION_INTEGER(
 MCROUTER_OPTION_GROUP("Network")
 
 MCROUTER_OPTION_INTEGER(
+    uint32_t,
+    ipv6_flow_label,
+    0,
+    "ipv6-flow-label",
+    no_short,
+    "IPv6 flow label in [1, 1048575] for TCP connections to pool "
+    "destinations; 0 disables. Linux only. Connections to non-IPv6 "
+    "destinations and failed label registrations (e.g. EPERM if the label "
+    "exists with a share mode other than any, or ERANGE for labels >= 524288 "
+    "with net.ipv6.flowlabel_state_ranges=1) fail. Service-name destinations "
+    "connect through ServiceRouter and are not labeled. A fixed label disables "
+    "kernel flow-label repathing on retransmission timeouts.")
+
+MCROUTER_OPTION_INTEGER(
     int,
     keepalive_cnt,
     0,

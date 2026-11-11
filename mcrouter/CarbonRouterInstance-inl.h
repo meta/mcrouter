@@ -33,6 +33,7 @@
 #include "mcrouter/ThreadUtil.h"
 #include "mcrouter/lib/AuxiliaryCPUThreadPool.h"
 #include "mcrouter/lib/RuntimeVarsData.h"
+#include "mcrouter/lib/network/SocketUtil.h"
 #include "mcrouter/routes/McRouteHandleProvider.h"
 #include "mcrouter/stats.h"
 
@@ -116,6 +117,14 @@ CarbonRouterInstance<RouterInfo>* CarbonRouterInstance<RouterInfo>::createRaw(
     throw std::runtime_error(
         "Invalid service_name or router_name provided; must be"
         " strings matching [a-zA-Z0-9_-]+");
+  }
+
+  if (input_options.ipv6_flow_label != 0) {
+    if (auto probe = probeIPv6FlowLabel(input_options.ipv6_flow_label);
+        probe.hasError()) {
+      throw std::runtime_error(
+          fmt::format("Invalid ipv6_flow_label: {}", probe.error()));
+    }
   }
 
   if (input_options.test_mode) {

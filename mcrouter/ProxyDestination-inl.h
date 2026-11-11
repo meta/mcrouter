@@ -287,6 +287,7 @@ void ProxyDestination<Transport>::initializeTransport() {
 
   ConnectionOptions options(accessPoint());
   auto& opts = proxy().router().opts();
+  options.ipv6FlowLabel = opts.ipv6_flow_label;
   options.tcpKeepAliveCount = opts.keepalive_cnt;
   options.tcpKeepAliveIdle = opts.keepalive_idle_s;
   options.tcpKeepAliveInterval = opts.keepalive_interval_s;

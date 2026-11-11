@@ -7,8 +7,11 @@
 
 #pragma once
 
+#include <string>
+
 #include <folly/Expected.h>
 #include <folly/Range.h>
+#include <folly/Unit.h>
 #include <folly/io/SocketOptionMap.h>
 #include <folly/io/async/AsyncSocket.h>
 #include <folly/io/async/AsyncTransport.h>
@@ -22,6 +25,13 @@ namespace facebook {
 namespace memcache {
 
 struct ConnectionOptions;
+
+#ifdef __linux__
+// Linux IPv6 socket options that <linux/in6.h> omits once glibc's
+// <netinet/in.h> is included.
+inline constexpr int kIPv6FlowLabelManager = 32;
+inline constexpr int kIPv6FlowInfoSend = 33;
+#endif
 
 enum class ConnectionState {
   Up, // Connection is open and we can write into it.
@@ -52,6 +62,13 @@ folly::Expected<
 createAsyncSocket(
     folly::EventBase& eventBase,
     const ConnectionOptions& connectionOptions);
+/**
+ * Checks that the IPv6 flow label is in [1, kMaxIPv6FlowLabel] and registers
+ * it on a scratch socket, so that host configuration problems surface before
+ * any connection uses the label.
+ */
+folly::Expected<folly::Unit, std::string> probeIPv6FlowLabel(uint32_t label);
+
 /**
  * Get the socket address based on the given options.
  */

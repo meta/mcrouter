@@ -9,15 +9,22 @@
 
 #include <type_traits>
 
+#ifdef __linux__
+#include <linux/in6.h>
+#endif
+
 #include <fmt/format.h>
 
 #include <folly/Expected.h>
+#include <folly/ScopeGuard.h>
+#include <folly/String.h>
 #include <folly/io/SocketOptionMap.h>
 #include <folly/io/async/AsyncSSLSocket.h>
 #include <folly/io/async/AsyncSocket.h>
 #include <folly/io/async/AsyncSocketException.h>
 #include <folly/io/async/AsyncTransport.h>
 #include <folly/io/async/EventBase.h>
+#include <folly/net/NetOps.h>
 
 #include "mcrouter/lib/fbi/cpp/LogFailure.h"
 #include "mcrouter/lib/network/AsyncTlsToPlaintextSocket.h"
@@ -30,6 +37,23 @@ namespace facebook {
 namespace memcache {
 
 namespace {
+
+#ifdef __linux__
+// The kernel rejects an unspecified flr_dst but only reports it back
+// (getsockopt, /proc), so any fixed address works.
+in6_flowlabel_req flowLabelRequest(uint32_t label) {
+  in6_flowlabel_req request{};
+  request.flr_dst = in6addr_loopback;
+  request.flr_label = htonl(label);
+  request.flr_action = IPV6_FL_A_GET;
+  request.flr_flags = IPV6_FL_F_CREATE;
+  request.flr_share = IPV6_FL_S_ANY;
+  return request;
+}
+#else
+constexpr folly::StringPiece kFlowLabelsRequireLinux =
+    "IPv6 flow labels require Linux";
+#endif
 
 std::string getSessionKey(const ConnectionOptions& opts) {
   std::string service;
@@ -110,6 +134,40 @@ void createQoSClassOption(
     uint64_t qosPath) {
   const auto& optkey = getQoSOptionKey(addressFamily);
   options[optkey] = getClientQoS(qosClass, qosPath);
+}
+
+folly::Expected<
+    folly::AsyncTransportWrapper::UniquePtr,
+    folly::AsyncSocketException>
+setFlowLabel(
+    folly::Expected<
+        folly::AsyncTransportWrapper::UniquePtr,
+        folly::AsyncSocketException> socket,
+    const ConnectionOptions& options) {
+  if (socket.hasError() || options.ipv6FlowLabel == 0) {
+    return socket;
+  }
+#ifdef __linux__
+  auto* underlying =
+      socket.value()->getUnderlyingTransport<folly::AsyncSocket>();
+  if (!underlying) {
+    return folly::makeUnexpected(
+        folly::AsyncSocketException(
+            folly::AsyncSocketException::BAD_ARGS,
+            "Explicit flow labels require an AsyncSocket transport"));
+  }
+  try {
+    underlying->setIPv6FlowLabel(options.ipv6FlowLabel);
+  } catch (const folly::AsyncSocketException& error) {
+    return folly::makeUnexpected(error);
+  }
+  return socket;
+#else
+  return folly::makeUnexpected(
+      folly::AsyncSocketException(
+          folly::AsyncSocketException::BAD_ARGS,
+          kFlowLabelsRequireLinux.str()));
+#endif
 }
 
 } // namespace
@@ -209,9 +267,9 @@ folly::Expected<
 createSocket(
     folly::EventBase& eventBase,
     const ConnectionOptions& connectionOptions) {
-  folly::AsyncTransportWrapper::UniquePtr socket;
-
-  return createSocketCommon<false>(eventBase, connectionOptions);
+  return setFlowLabel(
+      createSocketCommon<false>(eventBase, connectionOptions),
+      connectionOptions);
 }
 
 folly::Expected<
@@ -220,7 +278,9 @@ folly::Expected<
 createAsyncSocket(
     folly::EventBase& eventBase,
     const ConnectionOptions& connectionOptions) {
-  auto socket = createSocketCommon<true>(eventBase, connectionOptions);
+  auto socket = setFlowLabel(
+      createSocketCommon<true>(eventBase, connectionOptions),
+      connectionOptions);
 
   const auto mech = connectionOptions.accessPoint->getSecurityMech();
   if (mech == SecurityMech::NONE || mech == SecurityMech::TLS ||
@@ -256,10 +316,55 @@ getSocketAddress(const ConnectionOptions& connectionOptions) {
   }
 }
 
+folly::Expected<folly::Unit, std::string> probeIPv6FlowLabel(uint32_t label) {
+  if (label == 0 || label > kMaxIPv6FlowLabel) {
+    return folly::makeUnexpected(
+        fmt::format(
+            "IPv6 flow label {} is not in [1, {}]", label, kMaxIPv6FlowLabel));
+  }
+#ifdef __linux__
+  const auto fd =
+      folly::netops::socket(AF_INET6, SOCK_STREAM | SOCK_CLOEXEC, 0);
+  if (fd == folly::NetworkSocket()) {
+    const auto error = errno;
+    return folly::makeUnexpected(
+        fmt::format(
+            "cannot create an IPv6 socket: {}", folly::errnoStr(error)));
+  }
+  SCOPE_EXIT {
+    folly::netops::close(fd);
+  };
+  const auto request = flowLabelRequest(label);
+  if (folly::netops::setsockopt(
+          fd, IPPROTO_IPV6, kIPv6FlowLabelManager, &request, sizeof(request)) !=
+      0) {
+    const auto error = errno;
+    return folly::makeUnexpected(
+        fmt::format(
+            "cannot register IPv6 flow label {}: {}",
+            label,
+            folly::errnoStr(error)));
+  }
+  return folly::unit;
+#else
+  return folly::makeUnexpected(kFlowLabelsRequireLinux.str());
+#endif
+}
+
 folly::SocketOptionMap createSocketOptions(
     const folly::SocketAddress& address,
     const ConnectionOptions& connectionOptions) {
   folly::SocketOptionMap options;
+
+#ifdef __linux__
+  if (connectionOptions.ipv6FlowLabel != 0 && address.getFamily() == AF_INET6 &&
+      !address.isIPv4Mapped()) {
+    const auto request = flowLabelRequest(connectionOptions.ipv6FlowLabel);
+    options[{IPPROTO_IPV6, kIPv6FlowLabelManager}] =
+        std::string(reinterpret_cast<const char*>(&request), sizeof(request));
+    options[{IPPROTO_IPV6, kIPv6FlowInfoSend}] = 1;
+  }
+#endif
 
   if (connectionOptions.accessPoint->isUnixDomainSocket()) {
     // TCP socket options are not supported by a Unix domain socket transport.
