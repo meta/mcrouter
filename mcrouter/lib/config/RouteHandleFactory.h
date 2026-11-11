@@ -9,11 +9,14 @@
 
 #include <memory>
 #include <stack>
+#include <string>
 #include <vector>
 
 #include <folly/Range.h>
 #include <folly/container/F14Map.h>
 #include <folly/json/dynamic.h>
+
+#include "mcrouter/lib/config/SharedRouteState.h"
 
 namespace facebook {
 namespace memcache {
@@ -38,7 +41,8 @@ class RouteHandleFactory {
    */
   RouteHandleFactory(
       RouteHandleProviderIf<RouteHandleIf>& provider,
-      size_t threadId);
+      size_t threadId,
+      SharedRouteStateTable* sharedState = nullptr);
 
   /**
    * Adds a named route handle that may be used later.
@@ -79,6 +83,19 @@ class RouteHandleFactory {
     return threadId_;
   }
 
+  // Factories must request state in the same construction order.
+  template <class T, class Make>
+  std::shared_ptr<T> sharedRouteState(const folly::dynamic& json, Make&& make) {
+    if (!sharedState_) {
+      return make();
+    }
+    return std::static_pointer_cast<T>(sharedState_->getOrCreate(
+        nextSharedSlot_++, typeid(T), std::hash<folly::dynamic>()(json), [&] {
+          std::shared_ptr<T> state = make();
+          return std::shared_ptr<void>(std::move(state));
+        }));
+  }
+
   /**
    * Pushes a list of route_handles that will be used the next time this class
    * sees $children_list$ in the config. The list of route handles are kept in
@@ -108,6 +125,8 @@ class RouteHandleFactory {
   folly::F14NodeMap<std::string, std::vector<RouteHandlePtr>> seen_;
   /// Thread where route handles created by this factory will be used
   size_t threadId_;
+  SharedRouteStateTable* sharedState_;
+  size_t nextSharedSlot_{0};
 
   // list of servers that should be used to replace "$children_list$" in config.
   std::stack<std::vector<RouteHandlePtr>> childrenLists_;

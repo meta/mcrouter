@@ -172,6 +172,10 @@ class CarbonRouterInstanceBase {
     return configFailures_.load(std::memory_order_relaxed);
   }
 
+  size_t configSharedRouteStateMismatches() const {
+    return configSharedRouteStateMismatches_.load(std::memory_order_relaxed);
+  }
+
   bool configuredFromDisk() const {
     return configuredFromDisk_.load(std::memory_order_relaxed);
   }
@@ -306,10 +310,10 @@ class CarbonRouterInstanceBase {
   LogPostprocessCallbackFunc postprocessCallback_;
   SvcIdentAuthCallbackFunc svcIdentAuthCallback_;
 
-  // These next four fields are used for stats
   std::atomic<uint64_t> startTime_{0};
   std::atomic<time_t> lastConfigAttempt_{0};
   std::atomic<size_t> configFailures_{0};
+  std::atomic<size_t> configSharedRouteStateMismatches_{0};
   std::atomic<bool> configuredFromDisk_{false};
   std::atomic<size_t> configFullAttempt_{0};
 

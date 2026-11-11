@@ -16,8 +16,9 @@ namespace memcache {
 template <class RouteHandleIf>
 RouteHandleFactory<RouteHandleIf>::RouteHandleFactory(
     RouteHandleProviderIf<RouteHandleIf>& provider,
-    size_t threadId)
-    : provider_(provider), threadId_(threadId) {}
+    size_t threadId,
+    SharedRouteStateTable* sharedState)
+    : provider_(provider), threadId_(threadId), sharedState_(sharedState) {}
 
 template <class RouteHandleIf>
 void RouteHandleFactory<RouteHandleIf>::addNamed(

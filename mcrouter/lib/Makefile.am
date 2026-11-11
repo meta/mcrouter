@@ -120,6 +120,7 @@ libmcrouter_a_SOURCES = \
   config/RouteHandleFactory-inl.h \
   config/RouteHandleFactory.h \
   config/RouteHandleProviderIf.h \
+  config/SharedRouteState.h \
   debug/ConnectionFifo.cpp \
   debug/ConnectionFifo.h \
   debug/ConnectionFifoProtocol.cpp \

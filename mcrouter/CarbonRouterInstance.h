@@ -374,6 +374,7 @@ class CarbonRouterInstance
   friend class LegacyPrivateAccessor;
   friend class CarbonRouterClient<RouterInfo>;
   friend class detail::McrouterManager;
+  friend class CarbonRouterInstanceTestHelper;
   friend class ProxyDestinationMap;
 };
 

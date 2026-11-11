@@ -541,6 +541,11 @@ void prepare_stats(CarbonRouterInstanceBase& router, stat_t* stats) {
   stat_set(
       stats,
       router.statsApi(),
+      config_shared_route_state_mismatches_stat,
+      router.configSharedRouteStateMismatches());
+  stat_set(
+      stats,
+      router.statsApi(),
       config_full_attempt_stat,
       router.configFullAttempt());
   stat_set(

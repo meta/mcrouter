@@ -10,6 +10,7 @@
 #include <fmt/format.h>
 
 #include <folly/MapUtil.h>
+#include <folly/ScopeGuard.h>
 #include <folly/Singleton.h>
 #include <folly/Synchronized.h>
 #include <folly/executors/IOThreadPoolExecutor.h>
@@ -534,6 +535,12 @@ bool CarbonRouterInstance<RouterInfo>::reconfigure(
 template <class RouterInfo>
 folly::Expected<folly::Unit, std::string>
 CarbonRouterInstance<RouterInfo>::configure(const ProxyConfigBuilder& builder) {
+  const auto mismatchesBefore = builder.sharedStateMismatchCount();
+  SCOPE_EXIT {
+    configSharedRouteStateMismatches_.fetch_add(
+        builder.sharedStateMismatchCount() - mismatchesBefore,
+        std::memory_order_relaxed);
+  };
   VLOG_IF(1, !opts_.constantly_reload_configs) << "started reconfiguring";
   std::vector<std::shared_ptr<ProxyConfig<RouterInfo>>> newConfigs;
   newConfigs.reserve(opts_.num_proxies);

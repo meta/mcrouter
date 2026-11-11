@@ -15,6 +15,7 @@
 #include <folly/json/json.h>
 
 #include "mcrouter/PoolFactory.h"
+#include "mcrouter/lib/config/SharedRouteState.h"
 #include "mcrouter/options.h"
 
 namespace facebook {
@@ -41,7 +42,16 @@ class ProxyConfigBuilder {
       Proxy<RouterInfo>& proxy,
       size_t index) const {
     return std::shared_ptr<ProxyConfig<RouterInfo>>(new ProxyConfig<RouterInfo>(
-        proxy, json_, configMd5Digest_, *poolFactory_, index));
+        proxy,
+        json_,
+        configMd5Digest_,
+        *poolFactory_,
+        index,
+        sharedState_.get()));
+  }
+
+  size_t sharedStateMismatchCount() const {
+    return sharedState_->mismatchCount();
   }
 
   const folly::dynamic& preprocessedConfig() const {
@@ -54,6 +64,8 @@ class ProxyConfigBuilder {
 
  private:
   folly::dynamic json_;
+  std::unique_ptr<SharedRouteStateTable> sharedState_ =
+      std::make_unique<SharedRouteStateTable>();
   std::unique_ptr<PoolFactory> poolFactory_;
   std::string configMd5Digest_;
 };

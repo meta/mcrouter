@@ -22,6 +22,7 @@ namespace facebook {
 namespace memcache {
 
 struct AccessPoint;
+class SharedRouteStateTable;
 
 namespace mcrouter {
 
@@ -110,7 +111,8 @@ class ProxyConfig {
       const folly::dynamic& json,
       std::string configMd5Digest,
       PoolFactory& poolFactory,
-      size_t index);
+      size_t index,
+      SharedRouteStateTable* sharedState);
 
   friend class ProxyConfigBuilder;
 };

@@ -30,11 +30,12 @@ ProxyConfig<RouterInfo>::ProxyConfig(
     const folly::dynamic& json,
     std::string configMd5Digest,
     PoolFactory& poolFactory,
-    size_t /* index */)
+    size_t /* index */,
+    SharedRouteStateTable* sharedState)
     : configMd5Digest_(std::move(configMd5Digest)) {
   McRouteHandleProvider<RouterInfo> provider(proxy, poolFactory);
   RouteHandleFactory<typename RouterInfo::RouteHandleIf> factory(
-      provider, proxy.getId());
+      provider, proxy.getId(), sharedState);
 
   checkLogic(json.isObject(), "Config is not an object");
 
