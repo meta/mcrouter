@@ -35,7 +35,7 @@ namespace mcrouter {
  *                      is already in the past.
  */
 template <class RouteHandleIf>
-static bool getExptimeFromRoute(
+static inline bool getExptimeFromRoute(
     const std::shared_ptr<RouteHandleIf>& rh,
     const folly::StringPiece key,
     uint32_t& newExptime) {
@@ -66,7 +66,7 @@ static bool getExptimeFromRoute(
  * @return(ToRequest)
  */
 template <class ToRequest, class Message>
-static ToRequest createRequestFromMessage(
+static inline ToRequest createRequestFromMessage(
     const folly::StringPiece key,
     const Message& message,
     uint32_t exptime) {
@@ -89,7 +89,7 @@ static ToRequest createRequestFromMessage(
  * @return(folly::StringPiece) - the non-salted routing key
  */
 template <class Request>
-static folly::StringPiece getRoutingKey(const Request& req) {
+static inline folly::StringPiece getRoutingKey(const Request& req) {
   return req.key_ref()->routingKey();
 }
 
@@ -104,7 +104,9 @@ static folly::StringPiece getRoutingKey(const Request& req) {
  * @return(std::string) - the resulting routing key
  */
 template <class Request>
-static std::string getRoutingKey(const Request& req, const std::string& salt) {
+static inline std::string getRoutingKey(
+    const Request& req,
+    const std::string& salt) {
   std::string ret;
   ret.reserve(req.key_ref()->routingKey().size() + salt.size());
   ret += req.key_ref()->routingKey();
@@ -122,7 +124,7 @@ static std::string getRoutingKey(const Request& req, const std::string& salt) {
  * @return(std::string) - the resulting key
  */
 template <class Request>
-static std::string getRoutingKey(
+static inline std::string getRoutingKey(
     const std::string& key,
     const std::string& salt) {
   std::string ret;
