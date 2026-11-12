@@ -11,8 +11,6 @@
 #include <folly/IPAddress.h>
 #include <folly/IPAddressException.h>
 
-#include "mcrouter/lib/fbi/cpp/util.h"
-
 namespace facebook {
 namespace memcache {
 
