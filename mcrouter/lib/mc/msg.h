@@ -273,6 +273,7 @@ enum mc_msg_flags_t {
   MC_MSG_FLAG_REQUEST_MISROUTED_OR_STALE = 0x200,
   MC_MSG_FLAG_KCB_MISS = 0x400,
   MC_MSG_FLAG_NZLIB_COMPRESSED = 0x800,
+  MC_MSG_FLAG_ENFORCE_STRICT_CAT = 0x1000,
   MC_MSG_FLAG_QUICKLZ_COMPRESSED = 0x2000,
   MC_MSG_FLAG_SNAPPY_COMPRESSED = 0x4000,
   MC_MSG_FLAG_BIG_VALUE = 0x8000,
@@ -378,6 +379,8 @@ static inline const char* mc_flag_to_string(const enum mc_msg_flags_t flag) {
       return "USER_16";
     case MC_MSG_FLAG_INCONSISTENT_WITH_TICKET:
       return "INCONSISTENT_WITH_TICKET";
+    case MC_MSG_FLAG_ENFORCE_STRICT_CAT:
+      return "ENFORCE_STRICT_CAT";
   }
   return "UNKNOWN";
 }
