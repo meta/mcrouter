@@ -101,6 +101,10 @@ ThriftTransportBase::getConnectingSocket() {
         }
         auto socket = std::move(expectedSocket).value();
 
+        if (!validateConnectingSocket(*socket)) {
+          return {};
+        }
+
         auto sockAddressExpected = getSocketAddress(connectionOptions_);
         if (sockAddressExpected.hasError()) {
           const auto& ex = sockAddressExpected.error();

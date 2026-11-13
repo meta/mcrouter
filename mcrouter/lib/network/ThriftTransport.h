@@ -107,6 +107,13 @@ class ThriftTransportBase : public Transport,
    */
   virtual void resetClient();
 
+  // Runs before connect(), including before the first TCP packet is sent.
+  // Returning false discards the socket and fails channel creation.
+  virtual bool validateConnectingSocket(
+      const folly::AsyncTransportWrapper&) noexcept {
+    return true;
+  }
+
   template <class F>
   auto sendSyncImpl(F&& sendFunc);
 
