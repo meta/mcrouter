@@ -53,6 +53,7 @@
     !defined(ANDROID) && !defined(MCROUTER_OSS_BUILD)
 #include "mcrouter/lib/network/facebook/MetaRoceTransport-inl.h"
 #include "mcrouter/lib/network/facebook/MetaRoceTransport.h"
+#include "ucache/server/xdp/metaroce/HardwareTimestampClock.h" // @manual=//ucache/server/xdp/metaroce:metaroce_hardware_timestamp_clock
 #endif
 #include "mcrouter/lib/network/gen/MemcacheRouterInfo.h"
 #include "mcrouter/routes/AllFastestRouteFactory.h"
@@ -463,6 +464,9 @@ McRouteHandleProvider<RouterInfo>::makePool(
 #if defined(MCROUTER_ENABLE_METAROCE) && defined(__linux__) && \
     !defined(ANDROID) && !defined(MCROUTER_OSS_BUILD)
         } else if (ap->getProtocol() == mc_metaroce_protocol) {
+          // Calibration can take 10 to 30 ms; do it here, not in the first
+          // connect on a proxy thread.
+          metaroce::HardwareTimestampClock::calibrate();
           using Transport = MetaRoceTransport;
           auto destResult = createDestinationRoute<Transport>(
               std::move(ap),
