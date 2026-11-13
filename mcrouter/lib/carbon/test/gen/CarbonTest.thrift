@@ -147,11 +147,8 @@ struct TestOptionalBool {
   1: optional bool optionalBool
 }
 union TestUnion {
-  @cpp.DeprecatedTerseWrite
   1: carbon.ui64 a
-  @cpp.DeprecatedTerseWrite
   2: carbon.ui32 b
-  @cpp.DeprecatedTerseWrite
   3: carbon.ui16 c
 }
 struct TestF14Containers {
