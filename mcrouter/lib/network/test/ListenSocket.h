@@ -35,13 +35,24 @@ class ListenSocket {
    */
   static ListenSocket createOnPort(uint16_t port, bool zeroCopyEnabled = false);
 
+  /**
+   * Listen on ::1 only, so nothing off the host can connect. There is no IPv4
+   * fallback: a client that connects to ::1 would miss a socket on 127.0.0.1,
+   * so a host without IPv6 fails here rather than later. A `port` of 0 takes an
+   * OS-assigned ephemeral one; any other port is bound with SO_REUSEADDR, as
+   * createOnPort() binds it.
+   *
+   * @throws std::runtime_error  if the port cannot be bound
+   */
+  static ListenSocket createOnLoopback(uint16_t port);
+
   uint16_t getPort() const {
     return port_;
   }
 
   /*
    * Get the socket fd. Note that the socket will be closed in
-   * destructor ~ListenSocket. If the caller of this funciton intends to close
+   * destructor ~ListenSocket. If the caller of this function intends to close
    * this fd, then use the other function releaseSocketFd()
    */
   int getSocketFd() const {

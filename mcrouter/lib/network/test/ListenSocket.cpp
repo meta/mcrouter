@@ -28,7 +28,8 @@ namespace memcache {
 std::pair<int, uint16_t> createAndBind(
     uint16_t port,
     bool zeroCopyEnable = false,
-    bool reuseAddr = false) {
+    bool reuseAddr = false,
+    bool loopbackOnly = false) {
   struct addrinfo hints;
   struct addrinfo* res;
 
@@ -38,7 +39,10 @@ std::pair<int, uint16_t> createAndBind(
   hints.ai_flags = AI_PASSIVE;
 
   auto portStr = folly::to<std::string>(port);
-  if (::getaddrinfo(nullptr, portStr.data(), &hints, &res)) {
+  if (loopbackOnly) {
+    auto ret = ::getaddrinfo("::1", portStr.data(), &hints, &res);
+    checkRuntime(!ret, "Failed to resolve ::1: {}", ::gai_strerror(ret));
+  } else if (::getaddrinfo(nullptr, portStr.data(), &hints, &res)) {
     hints.ai_family = AF_INET;
     auto ret = ::getaddrinfo(nullptr, portStr.data(), &hints, &res);
     checkRuntime(!ret, "Failed to find a local IP: {}", ::gai_strerror(ret));
@@ -88,9 +92,12 @@ std::pair<int, uint16_t> createAndBind(
 }
 
 namespace {
-std::pair<int, uint16_t>
-bindAndListen(uint16_t port, bool zeroCopyEnabled, bool reuseAddr) {
-  auto sockPort = createAndBind(port, zeroCopyEnabled, reuseAddr);
+std::pair<int, uint16_t> bindAndListen(
+    uint16_t port,
+    bool zeroCopyEnabled,
+    bool reuseAddr,
+    bool loopbackOnly = false) {
+  auto sockPort = createAndBind(port, zeroCopyEnabled, reuseAddr, loopbackOnly);
   if (::listen(sockPort.first, SOMAXCONN) != 0) {
     auto errStr = folly::errnoStr(errno);
     ::close(sockPort.first);
@@ -113,6 +120,15 @@ ListenSocket::ListenSocket(bool zeroCopyEnabled) {
 
 ListenSocket ListenSocket::createOnPort(uint16_t port, bool zeroCopyEnabled) {
   auto sockPort = bindAndListen(port, zeroCopyEnabled, /* reuseAddr */ true);
+  return ListenSocket(sockPort.first, sockPort.second);
+}
+
+ListenSocket ListenSocket::createOnLoopback(uint16_t port) {
+  auto sockPort = bindAndListen(
+      port,
+      /* zeroCopyEnabled */ false,
+      /* reuseAddr */ port != 0,
+      /* loopbackOnly */ true);
   return ListenSocket(sockPort.first, sockPort.second);
 }
 
