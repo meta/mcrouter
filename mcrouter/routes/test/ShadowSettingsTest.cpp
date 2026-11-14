@@ -10,9 +10,13 @@
 #include <folly/Range.h>
 #include <folly/json/json.h>
 
+#ifndef MCROUTER_OSS_BUILD
 #include "configerator/distribution/api/ScopedConfigeratorFake.h"
+#endif
 #include "mcrouter/CarbonRouterInstance.h"
+#ifndef MCROUTER_OSS_BUILD
 #include "mcrouter/facebook/FbConfigApi.h"
+#endif
 #include "mcrouter/lib/network/gen/MemcacheRouterInfo.h"
 #include "mcrouter/routes/ShadowSettings.h"
 
@@ -184,6 +188,7 @@ TEST_F(ShadowSettingsTest, shouldRouteByBucket) {
   }
 }
 
+#ifndef MCROUTER_OSS_BUILD
 TEST_F(ShadowSettingsTest, keyFractionRangeRV) {
   // configure RuntimeVarsFile
   facebook::configerator::ScopedConfigeratorFake configeratorFake;
@@ -222,3 +227,4 @@ TEST_F(ShadowSettingsTest, keyFractionRangeRV) {
   uint32_t expectedKeyFraction = 0.1 * std::numeric_limits<uint32_t>::max();
   ASSERT_TRUE(keyFraction == expectedKeyFraction);
 }
+#endif
