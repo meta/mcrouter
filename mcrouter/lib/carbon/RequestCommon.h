@@ -83,10 +83,20 @@ class RequestCommon : public MessageCommon {
   void setKcbIdentity(folly::StringPiece kcbIdentity) noexcept;
 
   /**
+   * Encoded id of the Artillery block this request was sent from, or empty.
+   * The legacy trace context has room for only the trace and edge ids, so this
+   * rides next to it. Used by mcrouter transport layer to set parent_block_id
+   * on the artillery trace ids thrift header.
+   */
+  const std::string& traceParentBlockId() const noexcept;
+
+  void setTraceParentBlockId(std::string parentBlockId);
+
+  /**
    * Copies every RequestCommon-level field that a derived sub-request must
-   * inherit from the request it was built from: trace context, CAT, client
-   * identifier, privacy agentic context, KCB identity, source IP, write
-   * timestamp and the reply-metadata bitmask.
+   * inherit from the request it was built from: trace context, trace parent
+   * block, CAT, client identifier, privacy agentic context, KCB identity,
+   * source IP, write timestamp and the reply-metadata bitmask.
    *
    * Prefer memcache::copyInheritedRequestFields(), which calls this and also
    * carries the per-message fields (tenant, bucket, product, regionalization,
@@ -128,6 +138,8 @@ class RequestCommon : public MessageCommon {
   // When set, the transport writes it as the kcb_identity thrift header so
   // the UCache server can bind the cache key to this ACL group.
   std::optional<std::string> kcbIdentity_;
+  // Encoded Artillery block id this request was sent from, or empty.
+  std::string traceParentBlockId_;
   // Source ip address.
   std::optional<folly::IPAddress> sourceIpAddr_;
   // write timestamp

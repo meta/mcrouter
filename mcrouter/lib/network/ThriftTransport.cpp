@@ -300,7 +300,7 @@ bool ThriftTransportUtil::hasArtilleryHeaders(
 }
 
 void ThriftTransportUtil::traceRequest(
-    const carbon::MessageCommon& request,
+    const carbon::RequestCommon& request,
     apache::thrift::RpcOptions& rpcOptions) {
   if (!request.traceContext().empty()) [[unlikely]] {
     folly::fibers::runInMainContext(
@@ -309,11 +309,16 @@ void ThriftTransportUtil::traceRequest(
 }
 
 void ThriftTransportUtil::traceRequestImpl(
-    const carbon::MessageCommon& request,
+    const carbon::RequestCommon& request,
     apache::thrift::RpcOptions& rpcOptions) {
   auto artilleryTraceIDs =
       facebook::contextprop::SerDeHelper::getArtilleryTraceIDsFromLegacyHeader(
           request.traceContext());
+  // The server reads this as the parent of the block it logs for the request.
+  if (auto parentBlockId = facebook::contextprop::SerDeHelper::decodeUInt64(
+          request.traceParentBlockId())) {
+    artilleryTraceIDs.parent_block_id() = parentBlockId;
+  }
   rpcOptions.setWriteHeader(
       facebook::contextprop::ContextpropConstants_constants::
           artillery_trace_ids_header_,

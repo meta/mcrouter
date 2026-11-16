@@ -93,9 +93,18 @@ void RequestCommon::setKcbIdentity(folly::StringPiece kcbIdentity) noexcept {
   kcbIdentity_ = kcbIdentity.str();
 }
 
+const std::string& RequestCommon::traceParentBlockId() const noexcept {
+  return traceParentBlockId_;
+}
+
+void RequestCommon::setTraceParentBlockId(std::string parentBlockId) {
+  traceParentBlockId_ = std::move(parentBlockId);
+}
+
 void RequestCommon::copyRequestContextFrom(
     const RequestCommon& other) noexcept {
   traceContext_ = other.traceContext_;
+  traceParentBlockId_ = other.traceParentBlockId_;
   cryptoAuthToken_ = other.cryptoAuthToken_;
   clientIdentifier_ = other.clientIdentifier_;
   privacyLibAgenticContext_ = other.privacyLibAgenticContext_;

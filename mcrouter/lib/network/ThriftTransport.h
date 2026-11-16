@@ -21,6 +21,7 @@
 
 #include "mcrouter/lib/Reply.h"
 #include "mcrouter/lib/carbon/ReplyCommon.h"
+#include "mcrouter/lib/carbon/RequestCommon.h"
 #include "mcrouter/lib/mc/protocol.h"
 #include "mcrouter/lib/network/ConnectionOptions.h"
 #include "mcrouter/lib/network/RpcStatsContext.h"
@@ -172,7 +173,7 @@ class ThriftTransportUtil {
 
 #ifndef LIBMC_FBTRACE_DISABLE
   void traceRequest(
-      const carbon::MessageCommon& request,
+      const carbon::RequestCommon& request,
       apache::thrift::RpcOptions& opts);
 
   template <class Response>
@@ -193,7 +194,7 @@ class ThriftTransportUtil {
           responseHeaders);
 
   void FOLLY_NOINLINE traceRequestImpl(
-      const carbon::MessageCommon& request,
+      const carbon::RequestCommon& request,
       apache::thrift::RpcOptions& opts);
 
   void FOLLY_NOINLINE traceResponseImpl(
