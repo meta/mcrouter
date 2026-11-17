@@ -14,14 +14,27 @@
 #include "mcrouter/lib/network/CarbonMessageDispatcher.h"
 #include "mcrouter/lib/network/CaretHeader.h"
 #include "mcrouter/lib/network/FBTrace.h"
-#ifndef LIBMC_FBTRACE_DISABLE
-#include "mcrouter/lib/network/McServerRequestContext.h"
-#endif
+
+namespace apache {
+namespace thrift {
+class Cpp2RequestContext;
+} // namespace thrift
+} // namespace apache
 
 namespace facebook {
 namespace memcache {
 void markContextAsTraced(McServerRequestContext& ctx);
+const apache::thrift::Cpp2RequestContext* getContextThriftRequestContext(
+    const McServerRequestContext& ctx);
 } // namespace memcache
+
+#ifndef LIBMC_FBTRACE_DISABLE
+namespace mcrouter {
+void extractAndSetCallerIdentities(
+    TracingData& data,
+    const apache::thrift::Cpp2RequestContext* reqCtx);
+} // namespace mcrouter
+#endif
 } // namespace facebook
 
 namespace carbon {
@@ -117,7 +130,7 @@ class CarbonRequestHandler : public facebook::memcache::CarbonMessageDispatcher<
         // Mark the context as being traced by Artillery
         markContextAsTraced(ctx);
         facebook::mcrouter::extractAndSetCallerIdentities(
-            *tracingData, ctx.getThriftRequestContext());
+            *tracingData, getContextThriftRequestContext(ctx));
         tracingData->startCounters();
       }
     } else if (facebook::mcrouter::traceEchoOnlyRequestReceived(

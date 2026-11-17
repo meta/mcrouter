@@ -158,6 +158,9 @@ class McServerRequestContext {
 
 void markContextAsTraced(McServerRequestContext& ctx);
 
+const apache::thrift::Cpp2RequestContext* getContextThriftRequestContext(
+    const McServerRequestContext& ctx);
+
 static_assert(
 #if defined(__i386__)
     sizeof(McServerRequestContext) == 20,

@@ -132,6 +132,11 @@ void markContextAsTraced(McServerRequestContext& ctx) {
   ctx.markAsTraced();
 }
 
+const apache::thrift::Cpp2RequestContext* getContextThriftRequestContext(
+    const McServerRequestContext& ctx) {
+  return ctx.getThriftRequestContext();
+}
+
 void* McServerRequestContext::getConnectionUserData() {
   return session_->userContext();
 }
