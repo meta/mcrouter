@@ -43,22 +43,22 @@ folly::Try<apache::thrift::RpcResponseComplete<carbon::test::TestReply>> sendSyn
     apache::thrift::RpcOptions& rpcOptions,
     RpcStatsContext* rpcStatsContext = nullptr) {
   bool needServerLoad = mcrouter::fiber_local<carbon::test::CarbonTestRouterInfo>::getThriftServerLoadEnabled();
-  if (FOLLY_UNLIKELY(needServerLoad)) {
+  if (needServerLoad) [[unlikely]] {
     rpcOptions.setWriteHeader(kLoadHeader, kDefaultLoadCounter);
   }
-  if (FOLLY_UNLIKELY(request.getCryptoAuthToken().has_value())) {
+  if (request.getCryptoAuthToken().has_value()) [[unlikely]] {
     rpcOptions.setWriteHeader(
         std::string{carbon::MessageCommon::kCryptoAuthTokenHeader}, request.getCryptoAuthToken().value());
   }
-  if (FOLLY_UNLIKELY(request.getClientIdentifier().has_value())) {
+  if (request.getClientIdentifier().has_value()) [[unlikely]] {
     rpcOptions.setWriteHeader(
         std::string{carbon::MessageCommon::kClientIdentifierHeader}, request.getClientIdentifier().value());
   }
-  if (FOLLY_UNLIKELY(request.getPrivacyLibAgenticContext().has_value())) {
+  if (request.getPrivacyLibAgenticContext().has_value()) [[unlikely]] {
     rpcOptions.setWriteHeader(
         std::string{carbon::MessageCommon::kPrivacyLibAgenticContextHeader}, request.getPrivacyLibAgenticContext().value());
   }
-  if (FOLLY_UNLIKELY(request.getKcbIdentity().has_value())) {
+  if (request.getKcbIdentity().has_value()) [[unlikely]] {
     rpcOptions.setWriteHeader(
         std::string{carbon::MessageCommon::kKcbIdentityHeader}, request.getKcbIdentity().value());
   }
@@ -74,7 +74,7 @@ folly::Try<apache::thrift::RpcResponseComplete<carbon::test::TestReply>> sendSyn
       rpcStatsContext->requestBodySize = stats.requestSerializedSizeBytes;
       rpcStatsContext->replySizeBeforeCompression = stats.responseSerializedSizeBytes;
       rpcStatsContext->replySizeAfterCompression = stats.responseWireSizeBytes;
-      if (FOLLY_UNLIKELY(needServerLoad && reply->responseContext.serverLoad)) {
+      if (needServerLoad && reply->responseContext.serverLoad) [[unlikely]] {
         rpcStatsContext->serverLoad = ServerLoad(
             static_cast<int32_t>(*reply->responseContext.serverLoad));
       }
@@ -91,22 +91,22 @@ folly::Try<apache::thrift::RpcResponseComplete<carbon::test::TestReplyStringKey>
     apache::thrift::RpcOptions& rpcOptions,
     RpcStatsContext* rpcStatsContext = nullptr) {
   bool needServerLoad = mcrouter::fiber_local<carbon::test::CarbonTestRouterInfo>::getThriftServerLoadEnabled();
-  if (FOLLY_UNLIKELY(needServerLoad)) {
+  if (needServerLoad) [[unlikely]] {
     rpcOptions.setWriteHeader(kLoadHeader, kDefaultLoadCounter);
   }
-  if (FOLLY_UNLIKELY(request.getCryptoAuthToken().has_value())) {
+  if (request.getCryptoAuthToken().has_value()) [[unlikely]] {
     rpcOptions.setWriteHeader(
         std::string{carbon::MessageCommon::kCryptoAuthTokenHeader}, request.getCryptoAuthToken().value());
   }
-  if (FOLLY_UNLIKELY(request.getClientIdentifier().has_value())) {
+  if (request.getClientIdentifier().has_value()) [[unlikely]] {
     rpcOptions.setWriteHeader(
         std::string{carbon::MessageCommon::kClientIdentifierHeader}, request.getClientIdentifier().value());
   }
-  if (FOLLY_UNLIKELY(request.getPrivacyLibAgenticContext().has_value())) {
+  if (request.getPrivacyLibAgenticContext().has_value()) [[unlikely]] {
     rpcOptions.setWriteHeader(
         std::string{carbon::MessageCommon::kPrivacyLibAgenticContextHeader}, request.getPrivacyLibAgenticContext().value());
   }
-  if (FOLLY_UNLIKELY(request.getKcbIdentity().has_value())) {
+  if (request.getKcbIdentity().has_value()) [[unlikely]] {
     rpcOptions.setWriteHeader(
         std::string{carbon::MessageCommon::kKcbIdentityHeader}, request.getKcbIdentity().value());
   }
@@ -122,7 +122,7 @@ folly::Try<apache::thrift::RpcResponseComplete<carbon::test::TestReplyStringKey>
       rpcStatsContext->requestBodySize = stats.requestSerializedSizeBytes;
       rpcStatsContext->replySizeBeforeCompression = stats.responseSerializedSizeBytes;
       rpcStatsContext->replySizeAfterCompression = stats.responseWireSizeBytes;
-      if (FOLLY_UNLIKELY(needServerLoad && reply->responseContext.serverLoad)) {
+      if (needServerLoad && reply->responseContext.serverLoad) [[unlikely]] {
         rpcStatsContext->serverLoad = ServerLoad(
             static_cast<int32_t>(*reply->responseContext.serverLoad));
       }
@@ -139,22 +139,22 @@ folly::Try<apache::thrift::RpcResponseComplete<McVersionReply>> sendSyncHelper(
     apache::thrift::RpcOptions& rpcOptions,
     RpcStatsContext* rpcStatsContext = nullptr) {
   bool needServerLoad = mcrouter::fiber_local<carbon::test::CarbonTestRouterInfo>::getThriftServerLoadEnabled();
-  if (FOLLY_UNLIKELY(needServerLoad)) {
+  if (needServerLoad) [[unlikely]] {
     rpcOptions.setWriteHeader(kLoadHeader, kDefaultLoadCounter);
   }
-  if (FOLLY_UNLIKELY(request.getCryptoAuthToken().has_value())) {
+  if (request.getCryptoAuthToken().has_value()) [[unlikely]] {
     rpcOptions.setWriteHeader(
         std::string{carbon::MessageCommon::kCryptoAuthTokenHeader}, request.getCryptoAuthToken().value());
   }
-  if (FOLLY_UNLIKELY(request.getClientIdentifier().has_value())) {
+  if (request.getClientIdentifier().has_value()) [[unlikely]] {
     rpcOptions.setWriteHeader(
         std::string{carbon::MessageCommon::kClientIdentifierHeader}, request.getClientIdentifier().value());
   }
-  if (FOLLY_UNLIKELY(request.getPrivacyLibAgenticContext().has_value())) {
+  if (request.getPrivacyLibAgenticContext().has_value()) [[unlikely]] {
     rpcOptions.setWriteHeader(
         std::string{carbon::MessageCommon::kPrivacyLibAgenticContextHeader}, request.getPrivacyLibAgenticContext().value());
   }
-  if (FOLLY_UNLIKELY(request.getKcbIdentity().has_value())) {
+  if (request.getKcbIdentity().has_value()) [[unlikely]] {
     rpcOptions.setWriteHeader(
         std::string{carbon::MessageCommon::kKcbIdentityHeader}, request.getKcbIdentity().value());
   }
@@ -170,7 +170,7 @@ folly::Try<apache::thrift::RpcResponseComplete<McVersionReply>> sendSyncHelper(
       rpcStatsContext->requestBodySize = stats.requestSerializedSizeBytes;
       rpcStatsContext->replySizeBeforeCompression = stats.responseSerializedSizeBytes;
       rpcStatsContext->replySizeAfterCompression = stats.responseWireSizeBytes;
-      if (FOLLY_UNLIKELY(needServerLoad && reply->responseContext.serverLoad)) {
+      if (needServerLoad && reply->responseContext.serverLoad) [[unlikely]] {
         rpcStatsContext->serverLoad = ServerLoad(
             static_cast<int32_t>(*reply->responseContext.serverLoad));
       }
@@ -204,7 +204,7 @@ class ThriftTransport<carbon::test::CarbonTestRouterInfo> : public ThriftTranspo
 
     return sendSyncImpl([this, &request, timeout, rpcStatsContext] {
       auto* thriftClient = getThriftClient();
-      if (FOLLY_LIKELY(thriftClient != nullptr)) {
+      if (thriftClient != nullptr) [[likely]] {
         auto rpcOptions = getRpcOptions(timeout);
         return sendSyncHelper(thriftClient, request, rpcOptions, rpcStatsContext);
       } else {
@@ -223,7 +223,7 @@ class ThriftTransport<carbon::test::CarbonTestRouterInfo> : public ThriftTranspo
 
     return sendSyncImpl([this, &request, timeout, rpcStatsContext] {
       auto* thriftClient = getThriftClient();
-      if (FOLLY_LIKELY(thriftClient != nullptr)) {
+      if (thriftClient != nullptr) [[likely]] {
         auto rpcOptions = getRpcOptions(timeout);
         return sendSyncHelper(thriftClient, request, rpcOptions, rpcStatsContext);
       } else {
@@ -242,7 +242,7 @@ class ThriftTransport<carbon::test::CarbonTestRouterInfo> : public ThriftTranspo
 
     return sendSyncImpl([this, &request, timeout, rpcStatsContext] {
       auto* thriftClient = getThriftClient();
-      if (FOLLY_LIKELY(thriftClient != nullptr)) {
+      if (thriftClient != nullptr) [[likely]] {
         auto rpcOptions = getRpcOptions(timeout);
         return sendSyncHelper(thriftClient, request, rpcOptions, rpcStatsContext);
       } else {
@@ -256,10 +256,10 @@ class ThriftTransport<carbon::test::CarbonTestRouterInfo> : public ThriftTranspo
 
  private:
   apache::thrift::Client<carbon::test::thrift::CarbonTest>* getThriftClient() {
-    if (FOLLY_UNLIKELY(!thriftClient_)) {
+    if (!thriftClient_) [[unlikely]] {
       thriftClient_ = createThriftClient<apache::thrift::Client<carbon::test::thrift::CarbonTest>>();
     }
-    if (FOLLY_LIKELY(thriftClient_.has_value())) {
+    if (thriftClient_.has_value()) [[likely]] {
       return &thriftClient_.value();
     }
     return nullptr;
