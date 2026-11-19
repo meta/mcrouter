@@ -319,11 +319,21 @@ class ServerOnRequest {
     auto& ctxRef = rctx->ctx;
 
 #ifndef MCROUTER_OSS_BUILD
-    // Propagate client identity from proxy -> memcache server when KCB enabled.
-    if (FOLLY_UNLIKELY(enableKeyClientBinding_) &&
-        ctxRef.getThriftRequestContext()) {
-      const auto* thriftCtx = ctxRef.getThriftRequestContext();
+    const auto* thriftCtx = ctxRef.getThriftRequestContext();
 
+    // Memcache gets the caller's CAT from here, and so do DL records when
+    // `distribution_propagate_cat_enabled` is on.
+    if (thriftCtx) {
+      auto serializedCat =
+          facebook::cryptocat::protocol::CryptoAuthTokenRetriever::
+              getUnverifiedSerializedTokensFromHeader(*thriftCtx);
+      if (serializedCat.has_value()) {
+        reqRef.setCryptoAuthToken(std::string{serializedCat.value()});
+      }
+    }
+
+    // Propagate client identity from proxy -> memcache server when KCB enabled.
+    if (FOLLY_UNLIKELY(enableKeyClientBinding_) && thriftCtx) {
       if (enableKeyClientBindingNonLookaside_) {
         // Non-lookaside KCB is authoritative: bind the client identifier only
         // when a verified MEMCACHE_ID vouches for the kcb_identity header. Do
@@ -346,13 +356,6 @@ class ServerOnRequest {
           reqRef.setClientIdentifier(
               std::get<std::string>(mayBeHashedIdentities->value()));
         }
-      }
-
-      auto serializedCat =
-          facebook::cryptocat::protocol::CryptoAuthTokenRetriever::
-              getUnverifiedSerializedTokensFromHeader(*thriftCtx);
-      if (serializedCat.has_value()) {
-        reqRef.setCryptoAuthToken(std::string{serializedCat.value()});
       }
 
       // Forward the client's `kcb_identity` header verbatim; the branches above

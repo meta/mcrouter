@@ -27,6 +27,7 @@ struct DistributionRouteSettings {
   std::string srcRegion;
   bool secureWrites{false};
   bool returnErrorOnDeleteFailure{false};
+  bool propagateCat{false};
 };
 
 constexpr std::string_view kAsynclogDistributionEndpoint = "0.0.0.0";
@@ -39,6 +40,8 @@ constexpr std::string_view kAsynclogDistributionEndpoint = "0.0.0.0";
  *   after it is distributed
  * - replay(bool) - enable replay mode (for mcreplay)
  * - src_region(string) - the region where the distribution request originated
+ * - distribution_propagate_cat_enabled(bool) - add the request's CAT to
+ *   distributed SETs
  */
 template <class RouterInfo>
 class DistributionRoute {
@@ -53,16 +56,18 @@ class DistributionRoute {
         replay_{settings.replay},
         srcRegion_{settings.srcRegion},
         secureWrites_(settings.secureWrites),
-        returnErrorOnDeleteFailure_(settings.returnErrorOnDeleteFailure) {}
+        returnErrorOnDeleteFailure_(settings.returnErrorOnDeleteFailure),
+        propagateCat_(settings.propagateCat) {}
 
   std::string routeName() const {
     return fmt::format(
-        "distribution|distributed_delete_rpc_enabled={}|replay={}|distribution_source_region={}|secure_writes={}|return_error_on_mc_delete_failure={}",
+        "distribution|distributed_delete_rpc_enabled={}|replay={}|distribution_source_region={}|secure_writes={}|return_error_on_mc_delete_failure={}|propagate_cat={}",
         distributedDeleteRpcEnabled_ ? "true" : "false",
         replay_ ? "true" : "false",
         srcRegion_,
         secureWrites_ ? "true" : "false",
-        returnErrorOnDeleteFailure_ ? "true" : "false");
+        returnErrorOnDeleteFailure_ ? "true" : "false",
+        propagateCat_ ? "true" : "false");
   }
 
   template <class Request>
@@ -123,7 +128,8 @@ class DistributionRoute {
                  distributionRegion,
                  srcRegion_,
                  std::nullopt,
-                 secureWrites_)
+                 secureWrites_,
+                 propagateCat_)
           .first;
     }
     folly::fibers::addTask([this,
@@ -141,7 +147,8 @@ class DistributionRoute {
           distributionRegion,
           srcRegion_,
           std::nullopt,
-          secureWrites_);
+          secureWrites_,
+          propagateCat_);
       if (axonLogRes) {
         ctx->proxy().stats().increment(
             distribution_set_axon_write_success_stat);
@@ -262,6 +269,7 @@ class DistributionRoute {
   const std::string srcRegion_;
   const bool secureWrites_;
   const bool returnErrorOnDeleteFailure_{false};
+  const bool propagateCat_{false};
 
   std::optional<std::string> inferDistributionRegionForReplay(
       const McDeleteRequest& req,

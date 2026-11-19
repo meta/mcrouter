@@ -5,6 +5,8 @@
  * LICENSE file in the root directory of this source tree.
  */
 
+#include <optional>
+#include <string>
 #include <vector>
 
 #include <folly/Range.h>
@@ -62,6 +64,60 @@ AxonMockResult setupAxonFn(std::shared_ptr<AxonContext>& ctx) {
     return folly::exception_wrapper();
   };
   return res;
+}
+
+constexpr folly::StringPiece kCatPropagationConfig = R"(
+  {
+    "distribution_source_region": "oregon",
+    "distribution_propagate_cat_enabled": true
+  }
+  )";
+
+McSetRequest setRequestWithCat(folly::StringPiece key) {
+  McSetRequest req(key);
+  req.value() = folly::IOBuf(folly::IOBuf::COPY_BUFFER, "value");
+  req.setCryptoAuthToken("serialized_cat");
+  return req;
+}
+
+// Routes `req` to `targetRegion` ("" for a broadcast) through a
+// DistributionRoute built from `config`, and returns the CAT in the record
+// written to Axon.
+std::optional<std::string> distributedCat(
+    folly::StringPiece config,
+    const std::string& targetRegion,
+    const McSetRequest& req) {
+  std::optional<std::string> cat;
+  auto axonCtx = std::make_shared<AxonContext>();
+  axonCtx->writeProxyFn =
+      [&](auto,
+          auto&& payload,
+          bool,
+          auto&& /* dedupeKey */) -> folly::exception_wrapper {
+    if (auto it = payload.find(invalidation::kCryptoAuthToken);
+        it != payload.end()) {
+      cat = it->second;
+    }
+    return folly::exception_wrapper();
+  };
+  std::vector<std::shared_ptr<TestHandle>> srHandleVec{
+      std::make_shared<TestHandle>(
+          GetRouteTestData(carbon::Result::FOUND, "a")),
+  };
+  auto rh = makeDistributionRoute<MemcacheRouterInfo>(
+      get_route_handles(srHandleVec)[0], folly::parseJson(config));
+  TestFiberManager<MemcacheRouterInfo> fm;
+  fm.runAll({[&]() {
+    mockFiberContext();
+    fiber_local<MemcacheRouterInfo>::runWithLocals([&]() {
+      fiber_local<MemcacheRouterInfo>::setAxonCtx(axonCtx);
+      fiber_local<MemcacheRouterInfo>::setBucketId(1234);
+      fiber_local<MemcacheRouterInfo>::setDistributionTargetRegion(
+          targetRegion);
+      rh->route(req);
+    });
+  }});
+  return cat;
 }
 } // namespace
 
@@ -441,6 +497,37 @@ TEST(DistributionRouteTest, broadcastSet) {
   EXPECT_EQ(tmp.operation, invalidation::DistributionOperation::Write);
   EXPECT_EQ(tmp.type, invalidation::DistributionType::Distribution);
   EXPECT_EQ(tmp.srcRegion, "oregon");
+}
+
+TEST(DistributionRouteTest, crossRegionSetCarriesCat) {
+  const auto cat = distributedCat(
+      kCatPropagationConfig,
+      "georgia",
+      setRequestWithCat("/georgia/default/test1"));
+
+  EXPECT_EQ(cat, "serialized_cat");
+}
+
+TEST(DistributionRouteTest, broadcastSetCarriesCat) {
+  const auto cat = distributedCat(
+      kCatPropagationConfig, "", setRequestWithCat("/*/*/test1"));
+
+  EXPECT_EQ(cat, "serialized_cat");
+}
+
+TEST(DistributionRouteTest, setOmitsCatByDefault) {
+  constexpr folly::StringPiece kDistributionRouteConfig = R"(
+  {
+    "distribution_source_region": "oregon"
+  }
+  )";
+
+  const auto cat = distributedCat(
+      kDistributionRouteConfig,
+      "georgia",
+      setRequestWithCat("/georgia/default/test1"));
+
+  EXPECT_FALSE(cat.has_value());
 }
 
 } // namespace facebook::memcache::mcrouter

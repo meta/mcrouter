@@ -450,4 +450,59 @@ TEST(McDistributionUtilsTest, distributeSetKeyBasedDedupeKeyTest) {
   ASSERT_TRUE(resultDedupeKey.has_value());
   EXPECT_NE(*resultDedupeKey, firstKey);
 }
+
+namespace {
+folly::F14FastMap<std::string, std::string> distributeSetKvPairs(
+    const McSetRequest& req,
+    bool propagateCat) {
+  folly::F14FastMap<std::string, std::string> kvPairs;
+  auto axonCtx = std::make_shared<mcrouter::AxonContext>();
+  axonCtx->writeProxyFn =
+      [&](auto,
+          auto&& payload,
+          bool,
+          const std::optional<std::string>&) -> folly::exception_wrapper {
+    kvPairs = payload;
+    return folly::exception_wrapper();
+  };
+  EXPECT_FALSE(distributeWriteRequest(
+                   req,
+                   axonCtx,
+                   /*bucketId=*/1,
+                   "texas",
+                   "altoona",
+                   std::nullopt,
+                   /*secureWrites=*/false,
+                   propagateCat)
+                   .has_exception_ptr());
+  return kvPairs;
+}
+} // namespace
+
+TEST(McDistributionUtilsTest, distributeSetAddsCatWhenEnabled) {
+  auto req = McSetRequest("key1");
+  req.setCryptoAuthToken("serialized_cat");
+
+  const auto kvPairs = distributeSetKvPairs(req, /*propagateCat=*/true);
+
+  const auto it = kvPairs.find(kCryptoAuthToken);
+  ASSERT_TRUE(it != kvPairs.end());
+  EXPECT_EQ(it->second, "serialized_cat");
+}
+
+TEST(McDistributionUtilsTest, distributeSetOmitsCatWhenDisabled) {
+  auto req = McSetRequest("key1");
+  req.setCryptoAuthToken("serialized_cat");
+
+  const auto kvPairs = distributeSetKvPairs(req, /*propagateCat=*/false);
+
+  EXPECT_TRUE(kvPairs.find(kCryptoAuthToken) == kvPairs.end());
+}
+
+TEST(McDistributionUtilsTest, distributeSetOmitsCatWhenRequestHasNone) {
+  const auto kvPairs =
+      distributeSetKvPairs(McSetRequest("key1"), /*propagateCat=*/true);
+
+  EXPECT_TRUE(kvPairs.find(kCryptoAuthToken) == kvPairs.end());
+}
 } // namespace facebook::memcache::invalidation::test

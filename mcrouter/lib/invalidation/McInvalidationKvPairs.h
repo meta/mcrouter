@@ -38,6 +38,7 @@ constexpr std::string_view kMessage("message");
 constexpr std::string_view kType("type");
 constexpr std::string_view kOperation("op");
 constexpr std::string_view kSourceRegion("src_region");
+constexpr std::string_view kCryptoAuthToken("cat");
 
 /**
  * Functions to generate/validate key-value pairs for a DL record.

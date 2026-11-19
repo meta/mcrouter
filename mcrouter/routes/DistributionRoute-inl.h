@@ -45,6 +45,11 @@ inline DistributionRouteSettings parseDistributionRouteSettings(
     settings.returnErrorOnDeleteFailure =
         jReturnErrorOnDeleteFailure->getBool();
   }
+  if (auto* jPropagateCat =
+          json.get_ptr("distribution_propagate_cat_enabled")) {
+    settings.propagateCat =
+        parseBool(*jPropagateCat, "distribution_propagate_cat_enabled");
+  }
   return settings;
 }
 

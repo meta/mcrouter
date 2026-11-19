@@ -31,7 +31,8 @@ FOLLY_NOINLINE folly::exception_wrapper distributeWriteRequest(
     const std::string& targetRegion,
     const std::string& sourceRegion,
     std::optional<std::string> message,
-    bool secureWrites) {
+    bool secureWrites,
+    bool propagateCat) {
   std::optional<std::string> pool;
   if (!axonCtx->poolFilter.empty()) {
     pool.emplace(axonCtx->poolFilter);
@@ -61,6 +62,9 @@ FOLLY_NOINLINE folly::exception_wrapper distributeWriteRequest(
         invalidation::DistributionOperation::Write,
         sourceRegion);
   });
+  if (propagateCat && req.getCryptoAuthToken().has_value()) {
+    kvPairs.emplace(invalidation::kCryptoAuthToken, *req.getCryptoAuthToken());
+  }
   return axonCtx->writeProxyFn(
       bucketId, std::move(kvPairs), secureWrites, std::move(dedupeKey));
 }

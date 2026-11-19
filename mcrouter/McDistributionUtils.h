@@ -57,6 +57,7 @@ memcache::McDeleteRequest addDeleteRequestSource(
  * @param sourceRegion Source (client) region of the distribution
  * @param message Optional message to pass down with the record
  * @param secureWrites enable client identity check for writes
+ * @param propagateCat add the request's CAT, if it has one, to the record
  * @return exception thrown in case of failure
  */
 FOLLY_NOINLINE folly::exception_wrapper distributeWriteRequest(
@@ -66,7 +67,8 @@ FOLLY_NOINLINE folly::exception_wrapper distributeWriteRequest(
     const std::string& targetRegion,
     const std::string& sourceRegion,
     std::optional<std::string> message = std::nullopt,
-    bool secureWrites = false);
+    bool secureWrites = false,
+    bool propagateCat = false);
 
 /**
  * Distribute delete requests to Distribution layer.
