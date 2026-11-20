@@ -224,7 +224,7 @@ uint64_t stats_aggregate_max_max_value(
 }
 
 static std::string rate_stat_to_str(ProxyBase* proxy, int idx) {
-  return folly::stringPrintf("%g", stats_rate_value(proxy, idx));
+  return fmt::format("{:g}", stats_rate_value(proxy, idx));
 }
 
 static std::string max_stat_to_str(ProxyBase* proxy, int idx) {
@@ -254,7 +254,7 @@ static std::string stat_to_str(const stat_t* stat, void* /* ptr */) {
     case stat_int64:
       return folly::to<std::string>(stat->data.int64);
     case stat_double:
-      return folly::stringPrintf("%g", stat->data.dbl);
+      return fmt::format("{:g}", stat->data.dbl);
     default:
       LOG(ERROR) << "unknown stat type " << stat->type << " (" << stat->name
                  << ")";
