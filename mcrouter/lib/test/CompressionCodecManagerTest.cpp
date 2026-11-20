@@ -36,7 +36,16 @@ void validateCodec(CompressionCodec* codec) {
 
 } // anonymous namespace
 
-TEST(CompressionCodecManager, basic) {
+class CompressionCodecManagerTest : public ::testing::Test {
+  protected:
+    void SetUp() override {
+      #ifdef DISABLE_COMPRESSION
+      GTEST_SKIP() << "compression is not available in the OSS build";
+      #endif // DISABLE_COMPRESSION
+    }
+};
+
+TEST_F(CompressionCodecManagerTest, basic) {
   std::unordered_map<uint32_t, CodecConfigPtr> codecConfigs;
   for (uint32_t i = 1; i <= 64; ++i) {
     codecConfigs.emplace(
@@ -57,7 +66,7 @@ TEST(CompressionCodecManager, basic) {
   }
 }
 
-TEST(CompressionCodecManager, basicNotEnabledWithFilters) {
+TEST_F(CompressionCodecManagerTest, basicNotEnabledWithFilters) {
   constexpr size_t kTypeId = 1;
   std::unordered_map<uint32_t, CodecConfigPtr> codecConfigs;
   FilteringOptions filters;
@@ -93,7 +102,7 @@ TEST(CompressionCodecManager, basicNotEnabledWithFilters) {
   EXPECT_EQ(0, enabledCodecs);
 }
 
-TEST(CompressionCodecManager, basicEnabled) {
+TEST_F(CompressionCodecManagerTest, basicEnabled) {
   std::unordered_map<uint32_t, CodecConfigPtr> codecConfigs;
   for (uint32_t i = 1; i <= 64; ++i) {
     codecConfigs.emplace(
@@ -124,7 +133,7 @@ TEST(CompressionCodecManager, basicEnabled) {
   EXPECT_EQ(64, enabledCodecs);
 }
 
-TEST(CompressionCodecManager, missingStart) {
+TEST_F(CompressionCodecManagerTest, missingStart) {
   std::unordered_map<uint32_t, CodecConfigPtr> codecConfigs;
   for (uint32_t i = 10; i <= 64; ++i) {
     codecConfigs.emplace(
@@ -149,7 +158,7 @@ TEST(CompressionCodecManager, missingStart) {
   }
 }
 
-TEST(CompressionCodecManager, missingMiddle) {
+TEST_F(CompressionCodecManagerTest, missingMiddle) {
   std::unordered_map<uint32_t, CodecConfigPtr> codecConfigs;
   for (uint32_t i = 1; i <= 20; ++i) {
     codecConfigs.emplace(
@@ -180,7 +189,7 @@ TEST(CompressionCodecManager, missingMiddle) {
   }
 }
 
-TEST(CompressionCodecManager, missingEnd) {
+TEST_F(CompressionCodecManagerTest, missingEnd) {
   std::unordered_map<uint32_t, CodecConfigPtr> codecConfigs;
   for (uint32_t i = 1; i <= 50; ++i) {
     codecConfigs.emplace(
@@ -205,7 +214,7 @@ TEST(CompressionCodecManager, missingEnd) {
   }
 }
 
-TEST(CompressionCodecManager, invalidDictionary) {
+TEST_F(CompressionCodecManagerTest, invalidDictionary) {
   std::unordered_map<uint32_t, CodecConfigPtr> codecConfigs;
   codecConfigs.emplace(
       1,
@@ -233,7 +242,7 @@ TEST(CompressionCodecManager, invalidDictionary) {
   validateCodec(codecMap->get(3));
 }
 
-TEST(CompressionCodecManager, getBest_validateCodecs) {
+TEST_F(CompressionCodecManagerTest, getBest_validateCodecs) {
   auto codecConfigs = testCodecConfigs();
   CompressionCodecManager codecManager(std::move(codecConfigs));
   folly::EventBase evb;
@@ -248,7 +257,7 @@ TEST(CompressionCodecManager, getBest_validateCodecs) {
   }
 }
 
-TEST(CompressionCodecManager, getBest_noMatches) {
+TEST_F(CompressionCodecManagerTest, getBest_noMatches) {
   auto codecConfigs = testCodecConfigs();
   CompressionCodecManager codecManager(std::move(codecConfigs));
   folly::EventBase evb;
@@ -285,7 +294,7 @@ TEST(CompressionCodecManager, getBest_noMatches) {
           CodecIdRange{1, 10}, 0 /* body size */, 1 /* reply type id */));
 }
 
-TEST(CompressionCodecManager, getBest_matches) {
+TEST_F(CompressionCodecManagerTest, getBest_matches) {
   auto codecConfigs = testCodecConfigs();
   CompressionCodecManager codecManager(std::move(codecConfigs));
   folly::EventBase evb;
@@ -331,7 +340,7 @@ TEST(CompressionCodecManager, getBest_matches) {
           CodecIdRange{1, 15}, 123 /* body size */, 1 /* reply type id */));
 }
 
-TEST(CompressionCodecManager, getBest_serverWithoutCodecs) {
+TEST_F(CompressionCodecManagerTest, getBest_serverWithoutCodecs) {
   std::unordered_map<uint32_t, CodecConfigPtr> codecConfigs;
   CompressionCodecManager codecManager(std::move(codecConfigs));
   folly::EventBase evb;
