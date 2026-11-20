@@ -7,6 +7,9 @@
 
 #pragma once
 
+#include <folly/IPAddressV4.h>
+#include <folly/IPAddressV6.h>
+#include <folly/Optional.h>
 #include <folly/io/async/EventBase.h>
 #include <folly/logging/xlog.h>
 #include <cassert>
@@ -24,9 +27,10 @@
 
 #include "mcrouter/CarbonRouterClient.h"
 #include "mcrouter/ProxyBase.h"
-#include "mcrouter/RequestAclChecker.h"
 #include "mcrouter/config.h"
+#include "mcrouter/lib/Reply.h"
 #include "mcrouter/lib/carbon/MessageCommon.h"
+#include "mcrouter/lib/carbon/Result.h"
 #include "mcrouter/lib/network/AsyncMcServer.h"
 #include "mcrouter/lib/network/AsyncMcServerWorker.h"
 #include "mcrouter/lib/network/CaretHeader.h"
@@ -121,12 +125,30 @@ bool isAdminRequest(const Request& req) {
   }
 }
 
+inline bool isLoopbackAddress(
+    const folly::Optional<struct sockaddr_storage>& address) noexcept {
+  if (!address.hasValue()) {
+    return false;
+  }
+  const auto* addr =
+      reinterpret_cast<const struct sockaddr*>(address.get_pointer());
+  if (addr->sa_family == AF_INET) {
+    const auto* addr4 = reinterpret_cast<const struct sockaddr_in*>(addr);
+    return folly::IPAddressV4(addr4->sin_addr).isLoopback();
+  }
+  if (addr->sa_family == AF_INET6) {
+    const auto* addr6 = reinterpret_cast<const struct sockaddr_in6*>(addr);
+    return folly::IPAddressV6(addr6->sin6_addr).isLoopback();
+  }
+  return false;
+}
+
 // McServerSession leaves the address default-constructed when getPeerAddress
 // throws at accept, and getAddress() then throws bad_variant_access.
 template <class Callback>
 bool isLocalPeer(Callback& ctx) noexcept {
   try {
-    return RequestAclChecker::isLocalRequest(ctx.getPeerSocketAddress());
+    return isLoopbackAddress(ctx.getPeerSocketAddress());
   } catch (const std::exception&) {
     return false;
   }
@@ -163,8 +185,6 @@ class ServerOnRequest {
       bool retainSourceIp,
       bool enablePassThroughMode,
       bool remoteThread,
-      ExternalStatsHandler& statsHandler,
-      bool requestAclCheckerEnable,
       bool enableKeyClientBinding = false,
       bool enableReplySource = false,
       bool enableKeyClientBindingNonLookaside = false,
@@ -183,10 +203,6 @@ class ServerOnRequest {
             std::move(keyClientBindingNonLookasideVerifier)),
         dropUntaintedClientRequests_(dropUntaintedClientRequests),
         proxy_(proxy) {
-    if constexpr (RouterInfo::useRequestAclChecker) {
-      aclChecker_ = std::make_unique<RequestAclChecker>(
-          statsHandler, requestAclCheckerEnable);
-    }
 #ifndef MCROUTER_OSS_BUILD
     // Non-lookaside KCB needs to verify the request CAT to surface its
     // MEMCACHE_ID identities (the proxy only has the TLS peer identity
@@ -298,14 +314,6 @@ class ServerOnRequest {
       }
     }
 #endif
-    if constexpr (
-        RouterInfo::useRequestAclChecker &&
-        !folly::IsOneOf<Request, McDeleteRequest>::value) {
-      if (aclChecker_->shouldReply(ctx, req)) {
-        aclChecker_->template reply<Request>(std::forward<Callback>(ctx));
-        return;
-      }
-    }
     // We just reuse buffers iff:
     //  1) enablePassThroughMode_ is true.
     //  2) headerInfo is not NULL.
@@ -420,7 +428,6 @@ class ServerOnRequest {
   const bool retainSourceIp_{false};
   const bool enablePassThroughMode_{false};
   const bool remoteThread_{false};
-  std::unique_ptr<RequestAclChecker> aclChecker_;
   const bool enableKeyClientBinding_{false};
   const bool enableReplySource_{false};
   const bool enableKeyClientBindingNonLookaside_{false};

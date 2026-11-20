@@ -208,13 +208,6 @@ MCROUTER_OPTION_TOGGLE(
     no_short,
     "If true, enforces the result of the ACL check.")
 
-MCROUTER_OPTION_TOGGLE(
-    prefix_acl_checker_enable,
-    false,
-    "prefix-acl-checker-enable",
-    no_short,
-    "If true, incoming requests are checked against the Prefix ACL.")
-
 MCROUTER_OPTION_STRING(
     server_ssl_service_identity,
     "memcache",

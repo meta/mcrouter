@@ -239,8 +239,6 @@ mcrouter_SOURCES = \
   Server-inl.h \
   Server.h \
   ServerOnRequest.h \
-  RequestAclChecker.h \
-  RequestAclChecker.cpp \
   StandaloneConfig.cpp \
   StandaloneConfig.h \
   StandaloneUtils.cpp \

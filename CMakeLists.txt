@@ -472,7 +472,6 @@ target_link_libraries(mcroutercore PUBLIC mcrouter_lib)
 # =============================================================================
 set(MCROUTER_SERVER_SOURCES
   mcrouter/main.cpp
-  mcrouter/RequestAclChecker.cpp
   mcrouter/StandaloneConfig.cpp
   mcrouter/StandaloneUtils.cpp
 )

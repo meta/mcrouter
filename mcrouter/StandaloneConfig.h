@@ -18,7 +18,6 @@
 namespace apache {
 namespace thrift {
 class ThriftServer;
-class Cpp2RequestContext;
 } // namespace thrift
 } // namespace apache
 
@@ -32,7 +31,6 @@ class McServerSession;
 namespace mcrouter {
 // forward declarations
 class McrouterStandaloneOptions;
-class ExternalStatsHandler;
 
 void standalonePreInitFromCommandLineOpts(
     const std::unordered_map<std::string, std::string>& standaloneOptionsDict);
@@ -55,13 +53,6 @@ std::function<void(McServerSession&)> getConnectionAclChecker(
 
 std::function<bool(const folly::AsyncTransportWrapper*)>
 getThriftConnectionAclChecker(const std::string& serviceIdentity, bool enforce);
-
-using MemcacheRequestAclCheckerCallback = std::function<
-    bool(const apache::thrift::Cpp2RequestContext*, const folly::StringPiece)>;
-MemcacheRequestAclCheckerCallback getMemcacheServerRequestAclCheckCallback(
-    ExternalStatsHandler& statsHandler);
-
-void refreshMemcacheServerRequestAclChecker();
 
 } // namespace mcrouter
 } // namespace memcache

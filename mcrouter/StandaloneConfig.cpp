@@ -42,13 +42,6 @@ getThriftConnectionAclChecker(
   return [](const folly::AsyncTransportWrapper*) { return true; };
 }
 
-MemcacheRequestAclCheckerCallback getMemcacheServerRequestAclCheckCallback(
-    ExternalStatsHandler&) {
-  return {};
-}
-
-void refreshMemcacheServerRequestAclChecker() {}
-
 } // namespace mcrouter
 } // namespace memcache
 } // namespace facebook
