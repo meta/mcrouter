@@ -19,7 +19,7 @@
 #include <folly/fibers/Baton.h>
 #include <folly/portability/Sockets.h>
 #include <folly/portability/Unistd.h>
-#include <folly/test/SocketAddressTestHelper.h>
+#include <folly/testing/SocketAddressTestHelper.h>
 
 #include "mcrouter/CarbonRouterInstance.h"
 #include "mcrouter/config.h"
