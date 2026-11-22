@@ -1,0 +1,39 @@
+FROM ubuntu:xenial
+
+RUN set -xe \
+        && buildDeps=" \
+                wget \
+                apt-transport-https" \
+        && DEBIAN_FRONTEND=noninteractive \
+           apt-get update \
+        && apt-get install -y $buildDeps 
+
+
+COPY ["container/ubuntu-packaged/entrypoint.sh", \
+      "/usr/local/bin/"  \
+     ]
+
+COPY ["container/ubuntu-packaged/10-mcrouter.list", \
+      "/etc/apt/sources.list.d/"  \
+     ]
+
+COPY ["container/ubuntu-packaged/mcrouter.json", \
+      "/etc/mcrouter/"  \
+     ]
+
+
+
+RUN wget -qO- \
+        https://facebook.github.io/mcrouter/debrepo/xenial/PUBLIC.KEY \
+        | apt-key add \
+        && DEBIAN_FRONTEND=noninteractive \
+           apt-get update \
+        && \
+           apt-get install -yq mcrouter --no-install-recommends  \
+        && apt-get purge -y --autoremove -o APT::AutoRemove::RecommendsImportant=false wget apt-transport-https \
+        && apt-get autoremove && apt-get autoclean && rm -rf /var/lib/apt-lists/*
+
+
+ENV MCROUTER_LISTEN_PORT 5000
+
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
