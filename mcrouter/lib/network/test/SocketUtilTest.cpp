@@ -16,7 +16,7 @@
 #include <folly/io/async/AsyncSocket.h>
 #include <folly/io/async/EventBase.h>
 #include <folly/io/async/test/ConnCallback.h>
-#include <folly/net/test/MockNetOpsDispatcher.h>
+#include <folly/net/testing/MockNetOpsDispatcher.h>
 #include <folly/testing/SocketAddressTestHelper.h>
 
 #include "mcrouter/lib/network/ConnectionOptions.h"
