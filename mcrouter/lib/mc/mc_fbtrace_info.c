@@ -8,7 +8,7 @@
 #include "mc_fbtrace_info.h"
 
 #include <assert.h>
-#include <malloc.h>
+#include <stdlib.h>
 #include <string.h>
 
 static mc_fbtrace_t* mc_fbtrace_incref(mc_fbtrace_t* fbt) {
