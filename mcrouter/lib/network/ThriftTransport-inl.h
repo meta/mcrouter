@@ -129,8 +129,7 @@ FOLLY_NOINLINE auto ThriftTransportBase::makeError(
              })) {
   } else if (ew.with_exception(
                  [&](const thrift::CarbonResultInvalidRequest& e) {
-                   if (e.get_message().find(kBadKeyMessage) !=
-                       std::string::npos) {
+                   if (e.message()->find(kBadKeyMessage) != std::string::npos) {
                      setReplyResultAndMessage(
                          reply, carbon::Result::BAD_KEY, e.what());
                    } else {
