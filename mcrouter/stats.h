@@ -33,7 +33,6 @@ namespace mcrouter {
 #define STUI STAT
 #define STSI STAT
 #define STSS STAT
-#define EXTERNAL_STAT(name)
 enum stat_name_t {
 #include "stat_list.h"
   num_stats,
@@ -42,7 +41,6 @@ enum stat_name_t {
 #undef STUI
 #undef STSI
 #undef STSS
-#undef EXTERNAL_STAT
 
 // Forward declarations
 class CarbonRouterInstanceBase;
@@ -75,7 +73,6 @@ enum stat_group_t {
   all_stats = 0xffff,
   server_stats = 0x10000,
   suspect_server_stats = 0x40000,
-  external_stats = 0x80000,
   unknown_stats = 0x10000000,
   visitor_stats = 0x20000000,
 };

@@ -433,7 +433,6 @@ set(MCROUTER_CORE_SOURCES
   mcrouter/ThriftAcceptor.cpp
   mcrouter/TkoLog.cpp
   mcrouter/TkoTracker.cpp
-  mcrouter/ExternalStatsHandler.cpp
 
   # Routes
   mcrouter/routes/BigValueRoute.cpp

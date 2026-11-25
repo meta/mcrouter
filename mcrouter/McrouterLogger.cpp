@@ -236,13 +236,6 @@ void McrouterLogger::log() {
       requestStats.setDefault(k, 0) += proxyRequestStats[k];
     }
   }
-  /* Add standalone stats (does not filter zeroes) */
-  {
-    const auto externalRequestStats =
-        router_.externalStatsHandler().dumpStats(false /* filterZeroes */);
-    requestStats.update_missing(externalRequestStats);
-  }
-
   for (int i = 0; i < num_stats; ++i) {
     if (stats[i].group & rate_stats) {
       stats[i].type = stat_double;

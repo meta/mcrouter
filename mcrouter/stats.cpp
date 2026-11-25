@@ -276,15 +276,11 @@ void init_stats(stat_t* stats) {
 #define STSI(name, value, agg) STAT(name, stat_int64, agg, .int64 = value)
 #define STSS(name, value, agg) \
   STAT(name, stat_string, agg, .string = (char*)value)
-#define EXTERNAL_STAT(name) \
-  {                         \
-  }
 #include "stat_list.h"
 #undef STAT
 #undef STUI
 #undef STSI
 #undef STSS
-#undef EXTERNAL_STAT
 }
 
 // Returns 0 on success, -1 on failure.  In either case, all fields of
@@ -750,8 +746,6 @@ static stat_group_t stat_parse_group_str(folly::StringPiece str) {
     return suspect_server_stats;
   } else if (str == "count") {
     return count_stats;
-  } else if (str == "external") {
-    return external_stats;
   } else if (str.empty()) {
     return basic_stats;
   } else {
@@ -876,14 +870,6 @@ McStatsReply stats_reply(ProxyBase* proxy, folly::StringPiece group_str) {
               "status:{} num_failures:{}",
               it.second.first ? "tko" : "down",
               it.second.second));
-    }
-  }
-
-  if (groups & external_stats) {
-    const auto externalStats =
-        proxy->router().externalStatsHandler().getStats();
-    for (const auto& kv : externalStats) {
-      reply.addStat(kv.first, kv.second);
     }
   }
 

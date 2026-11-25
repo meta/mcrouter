@@ -229,9 +229,7 @@ libmcroutercore_a_SOURCES = \
   TkoLog.cpp \
   TkoLog.h \
   TkoTracker.cpp \
-  TkoTracker.h \
-  ExternalStatsHandler.cpp \
-  ExternalStatsHandler.h
+  TkoTracker.h
 
 mcrouter_SOURCES = \
   main.cpp \
