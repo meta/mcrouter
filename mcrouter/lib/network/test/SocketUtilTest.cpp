@@ -15,7 +15,6 @@
 
 #include <folly/io/async/AsyncSocket.h>
 #include <folly/io/async/EventBase.h>
-#include <folly/io/async/test/ConnCallback.h>
 #include <folly/net/testing/MockNetOpsDispatcher.h>
 #include <folly/testing/SocketAddressTestHelper.h>
 
@@ -29,6 +28,28 @@ namespace facebook::memcache {
 namespace {
 
 using namespace testing;
+
+// Synchronous connect-result catcher for the failure-path tests below:
+// connect() invokes the callback inline, so the state is terminal once
+// connect() returns.
+enum class ConnectState { WAITING, SUCCEEDED, FAILED };
+
+class SocketConnectCallback : public folly::AsyncSocket::ConnectCallback {
+ public:
+  void connectSuccess() noexcept override {
+    state = ConnectState::SUCCEEDED;
+  }
+
+  void connectErr(const folly::AsyncSocketException& ex) noexcept override {
+    state = ConnectState::FAILED;
+    exception = ex;
+  }
+
+  ConnectState state{ConnectState::WAITING};
+  folly::AsyncSocketException exception{
+      folly::AsyncSocketException::UNKNOWN,
+      "none"};
+};
 
 #ifdef __linux__
 TEST(SocketUtilTest, ExplicitLabelCreatesManagerOptions) {
@@ -72,9 +93,9 @@ TEST(SocketUtilTest, RegistrationFailurePreventsConnect) {
   dispatcher->forwardToDefaultImpl();
   socket->setOverrideNetOpsDispatcher(dispatcher);
   EXPECT_CALL(*dispatcher, connect(_, _, _)).Times(0);
-  folly::test::ConnCallback callback;
+  SocketConnectCallback callback;
   socket->connect(&callback, *address, 0, socketOptions);
-  EXPECT_EQ(folly::test::STATE_FAILED, callback.state);
+  EXPECT_EQ(ConnectState::FAILED, callback.state);
   EXPECT_EQ(EINVAL, callback.exception.getErrno());
   EXPECT_EQ(folly::NetworkSocket(), socket->getNetworkSocket());
 }
@@ -122,9 +143,9 @@ TEST(SocketUtilTest, NonNativeIPv6ConnectionsFailBeforeConnecting) {
     ASSERT_TRUE(transport.hasValue());
     auto* socket = (*transport)->getUnderlyingTransport<folly::AsyncSocket>();
     ASSERT_NE(nullptr, socket);
-    folly::test::ConnCallback callback;
+    SocketConnectCallback callback;
     socket->connect(&callback, *address, 0, socketOptions);
-    EXPECT_EQ(folly::test::STATE_FAILED, callback.state) << endpoint;
+    EXPECT_EQ(ConnectState::FAILED, callback.state) << endpoint;
     EXPECT_EQ(
         folly::AsyncSocketException::BAD_ARGS, callback.exception.getType())
         << endpoint;
